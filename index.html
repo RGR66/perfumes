@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AromaMatch RGR</title>
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧴</text></svg>">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    .animate-pulse-subtle { animation: pulse-subtle 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative overflow-x-hidden border-x border-slate-800">
+
+  <!-- Top App Bar -->
+  <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-lg shadow-lg shadow-cyan-500/20">
+        🧴
+      </div>
+      <div>
+        <div class="flex items-center gap-1.5">
+          <h1 class="text-base font-bold tracking-tight text-white leading-tight">AromaMatch RGR</h1>
+          <span id="syncBadge" title="Sincronizado con Google Sheet" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        </div>
+        <p class="text-[11px] text-cyan-400 font-medium leading-none" id="headerSub">Colección Activa • <span id="headerTotal">75</span> Perfumes</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <button onclick="syncWithGoogleSheet(true)" title="Sincronizar en directo con tu Google Sheet" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 transition text-xs font-semibold text-slate-300 flex items-center gap-1 border border-slate-700">
+        <span id="syncBtnIcon">🔄</span>
+        <span class="hidden sm:inline">Sync</span>
+      </button>
+      <button onclick="openHistoryModal()" title="Ver historial diario" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 transition text-xs font-semibold text-slate-300 flex items-center gap-1 border border-slate-700">
+        <span>📅</span>
+        <span class="hidden sm:inline">Historial</span>
+        <span id="historyBadgeCount" class="w-4 h-4 rounded-full bg-cyan-500 text-slate-950 text-[10px] font-extrabold flex items-center justify-center hidden">0</span>
+      </button>
+      <button onclick="openCatalogModal()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-95 transition text-xs font-semibold text-slate-300 flex items-center gap-1 border border-slate-700">
+        <span>📋</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Scrollable Area -->
+  <main class="flex-1 p-4 pb-24 space-y-4 overflow-y-auto hide-scrollbar">
+
+    <!-- Smart Context Banner with Live Weather for Alenda Golf (Monforte del Cid) -->
+    <div id="smartContextBanner" class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-700/70 rounded-2xl p-3.5 flex items-center justify-between text-xs shadow-md">
+      <div class="flex items-center gap-2.5">
+        <span class="text-2xl" id="contextIcon">☀️</span>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-slate-200" id="contextTitle">Cargando clima...</span>
+            <span id="weatherTemp" class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30">--°C</span>
+          </div>
+          <div class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5" id="contextSubtitle">
+            <span>📍 Alenda Golf (Monforte)</span>
+            <span>•</span>
+            <span id="weatherConditionText" class="text-slate-300">Consultando estación...</span>
+          </div>
+        </div>
+      </div>
+      <button onclick="fetchLiveWeather()" title="Actualizar clima en directo" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-cyan-400 transition active:scale-90 shrink-0">
+        🌤️
+      </button>
+    </div>
+
+    <!-- Filter Selectors -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-sm">
+      <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+        <span class="flex items-center gap-1.5"><span>🎯</span> Situación y Entorno</span>
+        <button onclick="resetFilters()" class="text-[11px] text-slate-400 hover:text-cyan-400 underline">Reiniciar</button>
+      </div>
+
+      <!-- Ocasion / Lugar -->
+      <div>
+        <label class="block text-[11px] text-slate-400 mb-1.5 font-medium">¿A dónde vas o qué vas a hacer?</label>
+        <select id="occasionSelect" onchange="applyFilters(true)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium">
+          <option value="visita_padre">⭐ Visitar a mi padre Raúl (Prioridad Elegancia, Pulcritud & Respeto)</option>
+          <option value="oficina">💼 Oficina, Trabajo & Negocios (Formal / Firma)</option>
+          <option value="diario" selected>🌅 Diario, Paseo matutino, Mandados o Casa</option>
+          <option value="tardeo">🌆 Tardeo, Terrazas con amigos o Comidas casuales</option>
+          <option value="noche_fiesta">🌙 Noche, Citas especiales o Salir de copas / Pubs</option>
+          <option value="deporte">🏃 Gimnasio, Deporte o Calor Intenso</option>
+          <option value="aire_libre_mar">🌊 Paseo marítimo abierto al mar / Brisa fuerte</option>
+        </select>
+      </div>
+
+      <!-- Grid for Season & Time of day -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1 font-medium">Sensación Térmica / Estación</label>
+          <select id="seasonSelect" onchange="applyFilters(true)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium">
+            <option value="verano">☀️ Cálido / Verano (24°C - 32°C)</option>
+            <option value="primavera">🌸 Templado / Primavera (20°C - 24°C)</option>
+            <option value="otono" selected>🍂 Fresco Suave / Otoño (16°C - 20°C)</option>
+            <option value="invierno">❄️ Frío Intenso / Invierno (&lt; 15°C)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] text-slate-400 mb-1 font-medium">Momento del Día</label>
+          <select id="timeSelect" onchange="applyFilters(true)" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium">
+            <option value="manana" selected>🌅 Mañana (8h - 14h)</option>
+            <option value="tarde">🌆 Tarde / Tardeo (14h - 20h)</option>
+            <option value="noche">🌙 Noche (20h en adelante)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick Toggles -->
+      <div class="flex items-center gap-2 pt-1">
+        <label class="flex-1 flex items-center justify-between p-2 rounded-xl bg-slate-800/80 border border-slate-700 cursor-pointer active:scale-98 transition">
+          <span class="text-[11px] text-slate-300 font-medium flex items-center gap-1">
+            <span>✨</span> Solo Imanes de Cumplidos
+          </span>
+          <input type="checkbox" id="onlyCompliments" onchange="applyFilters(true)" class="rounded text-cyan-500 focus:ring-0 w-4 h-4 bg-slate-900 border-slate-600">
+        </label>
+        <label class="flex-1 flex items-center justify-between p-2 rounded-xl bg-slate-800/80 border border-slate-700 cursor-pointer active:scale-98 transition">
+          <span class="text-[11px] text-slate-300 font-medium flex items-center gap-1">
+            <span>🟢</span> Solo "Repetir Ya"
+          </span>
+          <input type="checkbox" id="onlyRepeat" onchange="applyFilters(true)" class="rounded text-cyan-500 focus:ring-0 w-4 h-4 bg-slate-900 border-slate-600">
+        </label>
+      </div>
+    </div>
+
+    <!-- Match Counter & Status -->
+    <div class="flex items-center justify-between text-xs px-1 text-slate-400">
+      <span>Fragancias compatibles: <b id="matchCount" class="text-cyan-400">0</b></span>
+      <span id="filterSummaryText" class="text-[11px] truncate max-w-[200px]">Optimizando selección...</span>
+    </div>
+
+    <!-- Main Card Result (The Recommendation) -->
+    <div id="resultCard" class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border-2 border-cyan-500/50 p-4 shadow-xl shadow-cyan-950/30 transition-all duration-300">
+      <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Card Header Badges -->
+      <div class="flex items-center justify-between gap-1 mb-2">
+        <span id="badgeCategory" class="px-2.5 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-300 uppercase tracking-wider">ZARA</span>
+        <div class="flex items-center gap-1" id="cardBadges">
+        </div>
+      </div>
+
+      <!-- Perfume Names -->
+      <div class="mt-1">
+        <div class="text-[11px] font-semibold text-cyan-400 tracking-wide uppercase" id="perfumeBrand">Mugler / Creed</div>
+        <h2 class="text-xl font-extrabold text-white leading-tight mt-0.5 tracking-tight" id="perfumeName">Mugler Cologne / Original Vetiver</h2>
+        <div class="text-sm font-semibold text-slate-300 mt-0.5 flex items-center gap-1.5" id="perfumeDupe">
+          <span class="text-cyan-400">Clon:</span> My Soul Virent (100ml)
+        </div>
+      </div>
+
+      <!-- Olfactory Profile / Why this one? -->
+      <div class="mt-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-300 space-y-1.5">
+        <div class="flex items-center gap-1.5 text-cyan-300 font-semibold text-[11px]">
+          <span>💡</span> ¿Por qué para tu plan de hoy?
+        </div>
+        <p id="perfumeWhy" class="text-[12px] leading-relaxed text-slate-300">
+          Perfecta para tu plan de diario. Olor pulcro, neroli jabonoso, vetiver y sensación de ducha de lujo.
+        </p>
+      </div>
+
+      <!-- Notes / Specific Feedback -->
+      <div id="perfumeNotesContainer" class="mt-2 text-[11px] text-slate-400 bg-slate-800/30 rounded-lg p-2 border border-slate-800 flex items-start gap-1.5">
+        <span class="text-slate-500 text-xs">📝</span>
+        <span id="perfumeNotes" class="italic leading-snug">Sin notas adicionales.</span>
+      </div>
+
+      <!-- Action Buttons on Result Card -->
+      <div class="mt-4 pt-3 border-t border-slate-800 flex items-center gap-2">
+        <button onclick="pickRandom(false)" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-95 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-1.5 transition">
+          <span class="text-sm">🎲</span>
+          <span>Siguiente Opción</span>
+        </button>
+        <button onclick="markWornToday()" id="btnMarkWorn" class="py-2.5 px-3 rounded-xl border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm" title="Registrar que te has puesto esta colonia hoy">
+          <span id="btnMarkWornIcon">✅</span>
+          <span id="btnMarkWornText">Elegir Esta</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Top 3 Alternative Candidates List -->
+    <div class="space-y-2">
+      <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
+        <span>Otras alternativas compatibles</span>
+        <span class="text-[11px] text-cyan-400 font-normal">Toca para ver</span>
+      </div>
+      <div id="alternativeList" class="space-y-1.5">
+      </div>
+    </div>
+
+    <!-- Today's Worn Perfume Banner (Quick glance) -->
+    <div id="historyContainer" class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-3 text-xs text-slate-400 space-y-1.5 hidden cursor-pointer hover:border-slate-700 transition" onclick="openHistoryModal()">
+      <div class="flex items-center justify-between">
+        <div class="font-bold text-slate-300 flex items-center gap-1">
+          <span>🕒</span> Fragancia registrada hoy:
+        </div>
+        <span class="text-[10px] text-cyan-400 font-semibold underline">Ver historial diario ➔</span>
+      </div>
+      <p id="historyText" class="text-slate-300 text-[11px]"></p>
+    </div>
+
+  </main>
+
+  <!-- Floating Sticky Bottom CTA for Quick Reroll -->
+  <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-3 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex items-center gap-2 z-40">
+    <button onclick="pickRandom(true)" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:opacity-95 active:scale-98 text-white font-extrabold text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition animate-pulse-subtle">
+      <span class="text-lg">✨</span>
+      <span>¡ELEGIR PERFUME AHORA!</span>
+      <span class="text-xs font-normal opacity-80">(Aleatorio Inteligente)</span>
+    </button>
+  </footer>
+
+  <!-- Modal 1: Daily History Log (Registro Diario) -->
+  <div id="historyModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex flex-col justify-end sm:justify-center p-0 sm:p-4 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full mx-auto max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📅</span>
+          <div>
+            <h3 class="text-base font-bold text-white">Registro Diario de Colonias</h3>
+            <p class="text-[11px] text-slate-400">Historial ordenado por fecha de uso</p>
+          </div>
+        </div>
+        <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-sm hover:bg-slate-700">✕</button>
+      </div>
+
+      <!-- History Stats Strip -->
+      <div class="p-3 bg-slate-950/60 border-b border-slate-800 flex items-center justify-around text-center text-xs">
+        <div>
+          <div class="text-[10px] text-slate-400 font-semibold uppercase">Días registrados</div>
+          <div id="histTotalDays" class="text-sm font-bold text-cyan-400">0</div>
+        </div>
+        <div class="h-6 w-px bg-slate-800"></div>
+        <div>
+          <div class="text-[10px] text-slate-400 font-semibold uppercase">Más repetida</div>
+          <div id="histTopPerfume" class="text-xs font-bold text-amber-300 truncate max-w-[150px]">-</div>
+        </div>
+        <div class="h-6 w-px bg-slate-800"></div>
+        <div>
+          <button onclick="clearHistoryLog()" class="px-2 py-1 rounded-lg bg-red-950/40 border border-red-900/60 text-red-400 text-[10px] font-semibold hover:bg-red-900/50 transition">
+            Borrar todo
+          </button>
+        </div>
+      </div>
+
+      <!-- Daily History Items List -->
+      <div id="historyLogList" class="flex-1 overflow-y-auto p-4 space-y-2.5 text-xs">
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 border-t border-slate-800 bg-slate-900 text-center">
+        <button onclick="closeHistoryModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200">Volver</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Full Catalog Search -->
+  <div id="catalogModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex flex-col justify-end sm:justify-center p-0 sm:p-4 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full mx-auto max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white">Catálogo Completo Activo</h3>
+          <p class="text-xs text-slate-400"><span id="catalogTotal">75</span> fragancias disponibles en tu colección</p>
+        </div>
+        <button onclick="closeCatalogModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-sm hover:bg-slate-700">✕</button>
+      </div>
+      <!-- Search Input -->
+      <div class="p-3 border-b border-slate-800 bg-slate-950/40">
+        <input type="text" id="catalogSearch" oninput="filterCatalogModal()" placeholder="Buscar por clon, original, marca o notas..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+      </div>
+      <!-- Modal Items List -->
+      <div id="catalogList" class="flex-1 overflow-y-auto p-3 space-y-2 text-xs divide-y divide-slate-800/60">
+      </div>
+      <!-- Modal Footer -->
+      <div class="p-3 border-t border-slate-800 bg-slate-900 text-center">
+        <button onclick="closeCatalogModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Embedded Baseline Dataset
+    let PERFUMES = [{"id": 3, "brand": "Chanel", "name": "Bleu", "dupe": "Genave 149", "cat": "AROMAS ATERSANALES", "comp": false, "repeat": false, "notes": "Apenas dura 3 horas. Buena salida. Club de Nuit Blue Iconic dura mucho mas", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 5, "brand": "Hermes", "name": "Terre d' Hermes", "dupe": "Barrax 158", "cat": "AROMAS ATERSANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 7, "brand": "Dior", "name": "Sauvage", "dupe": "Quiros 181", "cat": "AROMAS ATERSANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 9, "brand": "Dior", "name": "Homme EDP", "dupe": "Layos 117", "cat": "AROMAS ATERSANALES", "comp": false, "repeat": false, "notes": "Este si que dura bastante en piel y proyecta. No importa repetir", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 15, "brand": "Creed", "name": "Green Irish Tweed", "dupe": "", "cat": "AROMAS ATERSANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 21, "brand": "Davidoff", "name": "Cool Water (Aromas artesanales nº 1135)", "dupe": "1135.0", "cat": "AROMAS ATERSANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 24, "brand": "Hugo Boss", "name": "Boss Bottled", "dupe": "Carvan nº 13", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 25, "brand": "Loewe", "name": "Esencia de Loewe", "dupe": "Carvan nº 14", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 26, "brand": "Ralph Lauren", "name": "Polo Blue", "dupe": "Carvan nº 18", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 27, "brand": "Ralph Lauren", "name": "Polo Blue", "dupe": "Carvan nº 18", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 28, "brand": "Abercrombie & Fitch", "name": "Fierce", "dupe": "Carvan nº 57", "cat": "CARAVAN", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 29, "brand": "Abercrombie & Fitch", "name": "Fierce", "dupe": "Carvan nº 57", "cat": "CARAVAN", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 30, "brand": "Donna Karan", "name": "Donna Karan New York DNKNY", "dupe": "Carvan nº 35", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 31, "brand": "Donna Karan", "name": "Donna Karan New York DNKNY", "dupe": "Carvan nº 35", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 32, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Carvan nº 15", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 33, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Carvan nº 66", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 34, "brand": "Paco Rabanne", "name": "One Million", "dupe": "Carvan nº 61", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 39, "brand": "Prada", "name": "L'Homme", "dupe": "Nº 5221", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Huele muy muy similar al original", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 41, "brand": "Yves Saint Laurent", "name": "M7", "dupe": "Nº 5206", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 42, "brand": "Dolce & Gabbana", "name": "D&G Pour Homme", "dupe": "Nº 1", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Me gusta. Es para otoño invierno. A diferencia de los otros aguanta en piel mas de 8 horas.", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 43, "brand": "Bvlgari", "name": "Man in Black", "dupe": "Nº 5300", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Me gusta. Es para otoño invierno. A diferencia de los otros aguanta en piel mas de 8 horas.", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 44, "brand": "Dior", "name": "Dior Homme Parfum EDP 2025", "dupe": "Nº 5303", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["cena_elegante", "formal", "diario", "frio", "noche_fiesta", "oficina"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 48, "brand": "Dior", "name": "Dior Homme Intense EDP", "dupe": "Bold Horizons Quiet Storm EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 49, "brand": "Yves Saint Laurent", "name": "Y EDP", "dupe": "Bold Horizons Electric Beat EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 50, "brand": "Tom Ford / Creed", "name": "Noir Extreme / Aventus", "dupe": "Bold Horizons Smoky Noir EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["cena_elegante", "formal", "diario", "frio", "noche_fiesta", "oficina"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 51, "brand": "Bvlgari", "name": "Man in Black", "dupe": "Bold Horizons N/43 EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 52, "brand": "Yves Saint Laurent", "name": "L'Homme", "dupe": "Bold Horizons Silent Shadow", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 55, "brand": "Creed", "name": "Aventus", "dupe": "Vibrant Leather", "cat": "ZARA", "comp": true, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 56, "brand": "Emporio Armani", "name": "Stronger With You Intensely", "dupe": "Florencia", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 57, "brand": "Louis Vuitton", "name": "Imagination", "dupe": "Sunrise at the Red Sand Dunes", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 58, "brand": "Kilian", "name": "Angels'  Share", "dupe": "Sand Desert at Sunset", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 59, "brand": "Phylosykos", "name": "Dyptikos", "dupe": "Terra Profonda Black Fig & Basil", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["terraza", "cena_elegante", "paseo", "diario", "frio", "deporte", "noche_fiesta", "oficina"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 60, "brand": "Armani", "name": "Acqua di Gio", "dupe": "Lisboa", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 61, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Seoul", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 62, "brand": "Le Labo", "name": "Santal 33", "dupe": "Energetically New York", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 63, "brand": "Louis Vuitton", "name": "Imagination", "dupe": "Sunrise at the Red Sand Dunes Intense", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 64, "brand": "Dior", "name": "Sauvage", "dupe": "Green Savage Winter", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 65, "brand": "Paco Rabanne", "name": "Invictus Victory", "dupe": "Blue Spirit Winter", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "terraza", "cena_elegante", "frio", "noche_fiesta", "cena_casual"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 66, "brand": "Tom Ford", "name": "Neroli Portofino", "dupe": "Amalfi Sunray", "cat": "ZARA", "comp": false, "repeat": false, "notes": "El perfil: Recrea la costa italiana con mandarina jugosa, bergamota y flor de naranjo con almizcle limpio.\n\nEn qué se parecen: Clava esa sensación de colonia italiana clásica de altísimo nivel, toallas blancas al sol y brisa mediterránea marina sin notas sintéticas punzantes.", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["terraza", "paseo", "diario", "deporte", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 67, "brand": "Jo Malone London", "name": "Orange Blossom", "dupe": "Fleur d'Oranger", "cat": "ZARA", "comp": false, "repeat": false, "notes": "El perfil: Flor de azahar pura, néroli radiante e ylang-ylang sobre almizcle. Huele a pétalos de naranjo mojados por el rocío y jabón fino de barbería de lujo.", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": true, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 68, "brand": "Byredo", "name": "Gypsy Water", "dupe": "Waterlily Tea Dress", "cat": "ZARA", "comp": false, "repeat": false, "notes": "Menta fresca natural, bergamota verde y nenúfar sobre base limpia de ambroxan.\n\nEn qué se parecen: Comparte la atmósfera etérea, verde y relajante de Gypsy Water, sustituyendo las notas amaderadas de pino e incienso por un carácter más acuático y cristalino de mañana de primavera.", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 69, "brand": "Mugler Cologne", "name": "Run Free", "dupe": "Elegantly Tokyo", "cat": "ZARA", "comp": false, "repeat": false, "notes": "Flores blancas, jazmín fresco muy puro y la nota contemporánea de akigalawood (madera especiada/terrosa limpia).", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["terraza", "formal", "paseo", "diario", "deporte", "oficina", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 77, "brand": "Emporio Armani", "name": "Stronger With You", "dupe": "El Him", "cat": "MERCADONA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 79, "brand": "Mugler / Creed", "name": "Mugler Cologne / Original Vetiver", "dupe": "My Soul Virent", "cat": "MERCADONA", "comp": false, "repeat": false, "notes": "Inspiración Mugler Cologne (Come Together) y Creed Original Vetiver (cítrico limpio, neroli jabonoso, petit grain y vetiver verde). Colección My Soul.", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 82, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Lacura White", "cat": "ALDI", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 83, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Lacura White", "cat": "ALDI", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 86, "brand": "Hugo Boss", "name": "Boss Bottled", "dupe": "Boost", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 87, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Victory", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "terraza", "cena_elegante", "frio", "noche_fiesta", "cena_casual"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 88, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Victory", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "terraza", "cena_elegante", "frio", "noche_fiesta", "cena_casual"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 89, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Acqua Fresh", "cat": "LIDL", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 90, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Acqua Fresh", "cat": "LIDL", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 93, "brand": "Creed", "name": "Aventus", "dupe": "Reebok - Blue Iconic", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["tardeo", "amigos", "terraza", "formal", "diario", "cena_casual", "oficina"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 94, "brand": "Jean Paul Gaultier", "name": "Ultra Male", "dupe": "Nike - Ultra Blue", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 95, "brand": "Yves Saint Laurent", "name": "Kouros", "dupe": "Milton Lloyd - The Man Silver", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 96, "brand": "Creed / Montblanc / Channel / Dior", "name": "Aventus / Explorer / Bleu / Sauvage", "dupe": "Don Algodón - Eau de Parfum Hombre", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["tardeo", "amigos", "terraza", "formal", "diario", "cena_casual", "oficina"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 97, "brand": "Channel", "name": "Bleu", "dupe": "Nike Gold Edition Man EDT", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 102, "brand": "Nautica", "name": "Voyage", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 103, "brand": "Nautica", "name": "Voyage", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 104, "brand": "Jaguar", "name": "Classic Black", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 105, "brand": "Prada", "name": "Prada L'Homme", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 106, "brand": "Davidoff", "name": "Cool Water", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 107, "brand": "Adolfo Dominguez", "name": "Agua Fresca", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 108, "brand": "Adolfo Dominguez", "name": "Vetiver Terra", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["cena_elegante", "formal", "diario", "frio", "noche_fiesta", "oficina", "visita_padre"], "father": true, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 109, "brand": "Adolfo Dominguez", "name": "Citrus Cedro", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["terraza", "paseo", "diario", "deporte", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 110, "brand": "Calvin Klein", "name": "Eternity", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 114, "brand": "Parfums de Marly", "name": "Kalan", "dupe": "Afnan - Zimaya Red Carpet Paragon", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Kalan de Parfums de Marly es una fragancia de la familia olfativa Oriental Especiada para Hombres y Mujeres. Kalan se lanzó en 2019. La Nariz detrás de esta fragrancia es Celine Ripert. Las Notas de Salida son especias, naranja sanguina y pimienta negra; las Notas de Corazón son lavanda y flor de azahar del naranjo; las Notas de Fondo son notas amaderadas, musgo, sándalo blanco, haba tonka y ámbar.", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 115, "brand": "Orto Parisi", "name": "Megamare", "dupe": "Lattfafa - Atlas", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Atlas es una inspiración del famoso y costoso perfume Megamare de Orto Parisi. El creador del video señala que es un logro muy superior al intento anterior de la marca (Megara) y destaca que en el secado son casi indistinguibles, con la ventaja de que Atlas es seis veces más barato.Aroma a mar realista y salvaje: Sus notas principales incluyen acordes acuáticos y de sal, jazmín, calone, cedro del Atlas, almizcle y una enorme cantidad de ambroxan. No huele a una playa tropical, sino a un mar revuelto, acantilados, algas, y al puerto (el autor lo compara con el mar Cantábrico), brindando una sensación extremadamente limpia, fresca y envolvente.", "seasons": ["verano", "primavera"], "times": ["tarde", "noche"], "occasions": ["aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 116, "brand": "Chanel", "name": "Bleu de Chanel EDP", "dupe": "Armaf - Club de Nuit Blue Iconic", "cat": "PERFUMES ARABES", "comp": false, "repeat": true, "notes": "Huele muy bien. Me gusta", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 119, "brand": "Rosendo Mateu", "name": "Nº 5 de Rosendo Mateu.", "dupe": "Maison Alhambra - Domino Essence", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Me duro todo el dia desde primera hora hasta la noche", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 120, "brand": "Maison Francis Kurkdjian", "name": "Baccarat Rouge 540", "dupe": "Armaf - Club de Nuit Untold", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 121, "brand": "Creed", "name": "Aventus", "dupe": "Armaf - Club de Nuit Intense Man Pure Parfum", "cat": "PERFUMES ARABES", "comp": false, "repeat": true, "notes": "No dura mucho en mi piel aunque nos gusta. 4 horas aprox sin reaplicar", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["tardeo", "amigos", "terraza", "formal", "diario", "cena_casual", "oficina"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 123, "brand": "Orto Parisi", "name": "Terroni", "dupe": "Maison Alhambra - Terra", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 124, "brand": "Xerjoff", "name": "XJ 1861 Naxos", "dupe": "Rayhaan - Italia", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 126, "brand": "Jean Paul Gaultier", "name": "Ultra Male", "dupe": "Al Wattaniya - Attar AL Wesal", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "99% parecido con Ultra Male", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 127, "brand": "Kilian", "name": "Angels'  Share", "dupe": "Lattafa - AKhaltaat Al Arabia", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Inspirado pero no es un clon", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}];
+
+    const SHEET_ID = '1GuN26NIvz_LV_j0k7B_eoixOGbXSjVtWt6_s-DI-nhs';
+    let currentSelection = null;
+    let filteredList = [];
+    let liveWeather = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Load cached remote perfumes if available
+      const cached = localStorage.getItem('perfumes_remote_cache');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 50) {
+            PERFUMES = parsed;
+            updateTotalsUI();
+          }
+        } catch(e) {}
+      }
+
+      autoDetectConditions();
+      loadHistory();
+      fetchLiveWeather();
+      // Auto sync with live Google Sheet in background
+      syncWithGoogleSheet(false);
+    });
+
+    function updateTotalsUI() {
+      document.getElementById('headerTotal').textContent = PERFUMES.length;
+      document.getElementById('catalogTotal').textContent = PERFUMES.length;
+    }
+
+    // ==========================================
+    // LIVE GOOGLE SHEET SYNC (API GViz / Cloud)
+    // ==========================================
+    async function syncWithGoogleSheet(manual = false) {
+      const syncBtn = document.getElementById('syncBtnIcon');
+      const badge = document.getElementById('syncBadge');
+      if (manual && syncBtn) syncBtn.classList.add('animate-spin');
+
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Network error fetching sheet');
+        const text = await resp.text();
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}') + 1;
+        const data = JSON.parse(text.slice(start, end));
+        const rows = data.table.rows;
+
+        const categories = ['AROMAS ATERSANALES', 'AROMAS ARTESANALES', 'CARAVAN', 'PERFUMARE', 'LEFTIES', 'ZARA', 'MERCADONA', 'ALDI', 'LIDL', 'DUPES VARIOS', 'ORIGINALES', 'PERFUMES ARABES'];
+        
+        // Exact list of finished signatures in your sheet
+        const finishedKeywords = [
+          'agua de gio', 'allure sport', 'invictus (aromas)', 'sauvage de dior muestra',
+          'platinum egoist', 'aura de loewe', 'bambú', 'eau sauvage',
+          'solo cedro', 'polo', 'bvlgari', "l'eau d'issey pour homme",
+          'eternity (1129', 'como tu fuerza', 'sesgo', 'viento como tu',
+          'u de adolfo dominguez', 'ck one essence', 'legend spirit',
+          'torino 21', 'silver mountain water (perfumare', 'sillage',
+          'jean lowe immortel', 'amber oud aqua dubai', 'turathi blue'
+        ];
+
+        let currentCat = null;
+        const newPerfumes = [];
+
+        for (let i = 0; i < rows.length; i++) {
+          const cells = rows[i].c;
+          if (!cells) continue;
+          
+          const val1 = (cells[0] && cells[0].v !== null) ? String(cells[0].v).trim() : '';
+          const val2 = (cells[1] && cells[1].v !== null) ? String(cells[1].v).trim() : '';
+          const val3 = (cells[2] && cells[2].v !== null) ? String(cells[2].v).trim() : '';
+          const val9 = (cells[8] && cells[8].v !== null) ? String(cells[8].v).trim() : '';
+
+          if (categories.includes(val1.toUpperCase())) {
+            currentCat = val1;
+            continue;
+          }
+
+          if (!val1 && !val2 && !val3) continue;
+
+          // Check if legend row
+          if (val2.includes('Perfumes clones terminados') || val2.includes('Perfumes aun probando')) continue;
+
+          const combined = `${val1} ${val2} ${val3}`.toLowerCase();
+
+          // Check finished
+          const isFinished = finishedKeywords.some(k => combined.includes(k));
+          if (isFinished) continue;
+
+          // Check compliments & repeat
+          const isComp = ['fierce', 'aventus', 'voyage', 'prada', 'agua fresca', 'vibrant leather'].some(k => combined.includes(k));
+          const isRepeat = ['polo blue', 'fierce', 'dnkny', 'acqua di gio', 'vibrant leather', 'sunrise', 'terra profonda', 'lisboa', 'seoul', 'acqua fresh', 'voyage', "prada l'homme", 'agua fresca', 'eternity', 'blue iconic'].some(k => combined.includes(k));
+
+          // Classify seasons, times, occasions
+          const { seasons, times, occasions, isFather, vibe, block } = classifyFragrance(val1, val2, val3);
+
+          newPerfumes.push({
+            id: i + 1,
+            brand: val1 || 'Original',
+            name: val2 || 'Perfume',
+            dupe: val3 || '',
+            cat: currentCat || 'COLECCIÓN',
+            comp: isComp,
+            repeat: isRepeat,
+            notes: val9 && val9 !== 'None' ? val9 : '',
+            seasons,
+            times,
+            occasions,
+            father: isFather,
+            vibe,
+            block
+          });
+        }
+
+        if (newPerfumes.length >= 60) {
+          PERFUMES = newPerfumes;
+          localStorage.setItem('perfumes_remote_cache', JSON.stringify(newPerfumes));
+          updateTotalsUI();
+          badge.className = "w-2 h-2 rounded-full bg-emerald-400";
+          if (manual) alert(`¡Sincronizado en directo con Google Sheet! Se han cargado ${newPerfumes.length} perfumes activos.`);
+          applyFilters(false);
+        }
+      } catch (err) {
+        console.log('Error syncing live sheet:', err);
+        badge.className = "w-2 h-2 rounded-full bg-amber-400";
+        if (manual) alert('Modo sin conexión: Usando base de datos interna y caché guardada.');
+      } finally {
+        if (syncBtn) syncBtn.classList.remove('animate-spin');
+      }
+    }
+
+    function classifyFragrance(brand, name, dupe) {
+      const full = `${brand} ${name} ${dupe}`.toLowerCase();
+      let seasons = [];
+      let times = [];
+      let occasions = [];
+      let isFather = false;
+
+      const fatherKeys = ['esencia', 'caravan 14', 'prada', '5221', 'vetiver terra', 'quiet storm', 'silent shadow', 'virent', 'mugler cologne', 'fleur d'oranger', 'elegantly tokyo'];
+      if (fatherKeys.some(k => full.includes(k))) isFather = true;
+
+      if (['amalfi sunray', 'neroli portofino', 'fleur d'oranger', 'orange blossom', 'waterlily tea dress', 'gypsy water', 'elegantly tokyo', 'run free', 'cool water', 'voyage', 'acqua di gio', 'citrus cedro', 'acqua fresh', 'agua fresca', 'lacura', 'lisboa', 'dkny', 'caravan 35', 'don algodon', 'bambu', 'diptyque', 'terra profonda', 'philosykos', 'caravan 15', 'caravan 18', 'polo blue', '1135'].some(k => full.includes(k))) {
+        seasons.push('verano', 'primavera');
+        times.push('manana', 'tarde');
+        occasions.push('diario', 'deporte', 'paseo', 'terraza');
+        if (['terra profonda', 'citrus cedro', 'elegantly tokyo', 'amalfi sunray'].some(k => full.includes(k))) {
+          occasions.push('oficina');
+          seasons.push('otono');
+        }
+      }
+
+      if (['prada', 'vetiver terra', 'esencia', 'quiet storm', 'silent shadow', 'eternity', 'virent', 'mugler', 'santal', 'energetically', 'sunrise', 'red sand dunes', 'vibrant leather', 'aventus', 'd&g pour homme', 'dolce', 'boss bottled', 'boost', 'caravan 13', 'the man silver', 'classic black', '5221', '5201', '5303', 'elegantly tokyo'].some(k => full.includes(k))) {
+        seasons.push('primavera', 'otono', 'invierno');
+        if (['virent', 'mugler', 'sunrise', 'vibrant', 'eternity', 'elegantly tokyo'].some(k => full.includes(k))) seasons.push('verano');
+        times.push('manana', 'tarde');
+        occasions.push('oficina', 'diario', 'formal');
+        if (isFather) occasions.push('visita_padre');
+      }
+
+      if (['fierce', 'caravan 57', 'green savage', 'sauvage', 'blue iconic', 'bleu', 'electric beat', 'club de nuit intense', 'reebok', 'invictus', 'caravan 66', 'seoul', 'nike gold'].some(k => full.includes(k))) {
+        seasons.push('primavera', 'verano', 'otono');
+        times.push('tarde', 'noche');
+        occasions.push('tardeo', 'terraza', 'cena_casual', 'amigos');
+      }
+
+      if (['blue spirit', 'victory', 'dior homme parfum', 'm7', '5206', 'man in black', 'n/43', '5300', 'angels', 'sand desert', 'khaltaat', 'ultra male', 'attar al wesal', 'stronger with you', 'florencia', 'el him', 'noir extreme', 'smoky noir', 'kalan', 'red carpet', 'domino', 'rosendo', 'baccarat', 'untold', 'one million', 'caravan 61', 'naxos', 'italia', 'terroni', 'terra', 'atlas', 'megamare'].some(k => full.includes(k))) {
+        seasons.push('otono', 'invierno');
+        times.push('noche', 'tarde');
+        occasions.push('noche_fiesta', 'cena_elegante', 'frio');
+        if (['atlas', 'megamare'].some(k => full.includes(k))) {
+          seasons = ['verano', 'primavera'];
+          occasions = ['aire_libre_mar'];
+        }
+      }
+
+      if (seasons.length === 0) seasons = ['primavera', 'verano', 'otono'];
+      if (times.length === 0) times = ['manana', 'tarde'];
+      if (occasions.length === 0) occasions = ['diario', 'oficina'];
+
+      let vibe = '🌊 Fresco Mediterráneo, Limpio & Diario';
+      let block = 1;
+
+      if (['blue spirit', 'victory', '5303', 'm7', '5206', 'man in black', 'n/43', '5300', 'angels', 'sand desert', 'khaltaat', 'ultra male', 'attar al wesal', 'stronger with you', 'florencia', 'el him', 'noir extreme', 'smoky noir', 'kalan', 'red carpet', 'domino', 'rosendo', 'baccarat', 'untold', 'one million', 'caravan 61', 'naxos', 'italia', 'terroni', 'terra'].some(k => full.includes(k))) {
+        vibe = '🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)';
+        block = 4;
+      } else if (['fierce', 'caravan 57', 'green savage', 'sauvage', 'blue iconic', 'bleu', 'electric beat', 'club de nuit intense', 'reebok', 'invictus', 'caravan 66', 'seoul', 'nike gold'].some(k => full.includes(k))) {
+        vibe = '🌆 Tardeo, Magnético & Citas Casuales';
+        block = 3;
+      } else if (['prada', 'vetiver terra', 'esencia', 'quiet storm', 'silent shadow', 'eternity', 'virent', 'mugler', 'santal', 'energetically', 'sunrise', 'red sand dunes', 'vibrant leather', 'aventus', 'd&g pour homme', 'dolce', 'boss bottled', 'boost', 'caravan 13', 'the man silver', 'classic black', '5221', '5201', 'elegantly tokyo'].some(k => full.includes(k))) {
+        vibe = '💼 Oficina, Pulcritud & Firma Elegante';
+        block = 2;
+      }
+
+      return {
+        seasons: Array.from(new Set(seasons)),
+        times: Array.from(new Set(times)),
+        occasions: Array.from(new Set(occasions)),
+        isFather,
+        vibe,
+        block
+      };
+    }
+
+    // Weather Fetch for Alenda Golf
+    async function fetchLiveWeather() {
+      const lat = 38.356;
+      const lon = -0.686;
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&timezone=Europe%2FMadrid`;
+
+      try {
+        const resp = await fetch(weatherUrl);
+        if (!resp.ok) throw new Error('Network error');
+        const data = await resp.json();
+        const curr = data.current;
+        liveWeather = curr;
+
+        const temp = Math.round(curr.temperature_2m);
+        const wCode = curr.weather_code;
+        const isDay = curr.is_day;
+
+        let condition = 'Despejado';
+        let icon = isDay ? '☀️' : '🌙';
+        if (wCode === 0) {
+          condition = isDay ? 'Soleado y despejado' : 'Noche despejada';
+          icon = isDay ? '☀️' : '🌙';
+        } else if (wCode >= 1 && wCode <= 3) {
+          condition = 'Parcialmente nublado';
+          icon = isDay ? '⛅' : '☁️';
+        } else if (wCode >= 45 && wCode <= 48) {
+          condition = 'Niebla / Bruma';
+          icon = '🌫️';
+        } else if (wCode >= 51 && wCode <= 67) {
+          condition = 'Lluvia ligera';
+          icon = '🌧️';
+        } else if (wCode >= 80) {
+          condition = 'Chubascos / Tormenta';
+          icon = '⛈️';
+        }
+
+        document.getElementById('weatherTemp').textContent = `${temp}°C`;
+        document.getElementById('weatherConditionText').textContent = condition;
+        document.getElementById('contextIcon').textContent = icon;
+
+        const seasonSelect = document.getElementById('seasonSelect');
+        if (temp >= 24) {
+          seasonSelect.value = 'verano';
+        } else if (temp >= 19) {
+          seasonSelect.value = 'primavera';
+        } else if (temp >= 15) {
+          seasonSelect.value = 'otono';
+        } else {
+          seasonSelect.value = 'invierno';
+        }
+
+        applyFilters(false);
+      } catch (err) {
+        console.log('Error fetching weather:', err);
+        document.getElementById('weatherTemp').textContent = '22°C';
+        document.getElementById('weatherConditionText').textContent = 'Soleado (Alenda Golf)';
+      }
+    }
+
+    function autoDetectConditions() {
+      const now = new Date();
+      const month = now.getMonth();
+      const hour = now.getHours();
+
+      let detectedTime = 'manana';
+      let timeName = 'Mañana';
+      let icon = '☀️';
+      if (hour >= 6 && hour < 14) {
+        detectedTime = 'manana';
+        timeName = 'Mañana';
+        icon = '🌅';
+      } else if (hour >= 14 && hour < 20) {
+        detectedTime = 'tarde';
+        timeName = 'Tarde / Tardeo';
+        icon = '🌆';
+      } else {
+        detectedTime = 'noche';
+        timeName = 'Noche';
+        icon = '🌙';
+      }
+      document.getElementById('timeSelect').value = detectedTime;
+
+      document.getElementById('contextIcon').textContent = icon;
+      document.getElementById('contextTitle').textContent = `${timeName} (${hour}:${String(now.getMinutes()).padStart(2, '0')}h)`;
+
+      applyFilters(true);
+    }
+
+    function applyFilters(shouldPick = true) {
+      const occasion = document.getElementById('occasionSelect').value;
+      const season = document.getElementById('seasonSelect').value;
+      const time = document.getElementById('timeSelect').value;
+      const onlyCompliments = document.getElementById('onlyCompliments').checked;
+      const onlyRepeat = document.getElementById('onlyRepeat').checked;
+
+      filteredList = PERFUMES.filter(p => {
+        if (occasion === 'visita_padre') {
+          if (!p.father) return false;
+        } else {
+          if (!p.occasions.includes(occasion)) {
+            if (occasion === 'diario' && (p.block === 1 || p.block === 2)) {
+            } else if (occasion === 'oficina' && p.block === 2) {
+            } else {
+              return false;
+            }
+          }
+        }
+
+        if (!p.seasons.includes(season)) {
+          if ((season === 'otono' || season === 'primavera' || season === 'verano') && p.block === 1) {
+          } else {
+            return false;
+          }
+        }
+
+        if (!p.times.includes(time)) {
+          if (p.block === 4 && time === 'manana' && occasion !== 'frio') return false;
+        }
+
+        if (onlyCompliments && !p.comp) return false;
+        if (onlyRepeat && !p.repeat) return false;
+
+        return true;
+      });
+
+      if (filteredList.length === 0) {
+        filteredList = PERFUMES.filter(p => p.seasons.includes(season) && (p.block === 1 || p.block === 2));
+      }
+
+      document.getElementById('matchCount').textContent = filteredList.length;
+
+      const occText = document.getElementById('occasionSelect').selectedOptions[0].text.split('(')[0];
+      document.getElementById('filterSummaryText').textContent = occText.trim();
+
+      if (shouldPick) {
+        pickRandom(false);
+      }
+    }
+
+    function pickRandom(animated = true) {
+      if (filteredList.length === 0) {
+        alert('No se encontraron perfumes con estos filtros estrictos. Relajando filtros...');
+        resetFilters();
+        return;
+      }
+
+      const weightedPool = [];
+      const occasion = document.getElementById('occasionSelect').value;
+
+      filteredList.forEach(p => {
+        let weight = 1;
+        if (p.repeat) weight += 2;
+        if (p.comp) weight += 2;
+        if (occasion === 'visita_padre') {
+          const str = `${p.brand} ${p.name} ${p.dupe}`.toLowerCase();
+          if (str.includes('esencia') || str.includes('prada') || str.includes('vetiver terra')) {
+            weight += 4;
+          }
+        }
+        for (let i = 0; i < weight; i++) {
+          weightedPool.push(p);
+        }
+      });
+
+      let chosen = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+      if (filteredList.length > 1 && currentSelection && chosen.id === currentSelection.id) {
+        chosen = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+      }
+
+      currentSelection = chosen;
+      renderSelection(chosen, animated);
+      renderAlternatives(chosen);
+    }
+
+    function getExplanationForOccasion(occasion, p) {
+      switch(occasion) {
+        case 'visita_padre':
+          return `Ideal para visitar a tu padre Raúl. Aroma de pulcritud absoluta, limpio, distinguido y respetuoso sin saturar la estancia.`;
+        case 'oficina':
+          return `Perfecta para jornada laboral y oficina. Transmite imagen ejecutiva, pulcra, ordenada y de camisa limpia durante todo el día.`;
+        case 'diario':
+          return `Excelente para tu rutina diaria, compras o paseo matutino. Sensación súper agradable, fresca y versátil con excelente tolerancia.`;
+        case 'tardeo':
+          return `Fantástica para tardeo, terraza con amigos o comida informal. Estela magnética y chispeante que proyecta de maravilla al aire libre.`;
+        case 'noche_fiesta':
+          return `Ideal para salida nocturna, copas o cita especial. Notas profundas y atractivas que destacan en ambientes nocturnos.`;
+        case 'deporte':
+          return `Muy fresca, limpia y energizante para gimnasio o deporte. No se vuelve pesada con la sudoración ni con el calor.`;
+        case 'aire_libre_mar':
+          return `Perfecta para paseo marítimo o espacios abiertos junto a la brisa marina. Potencia y frescor que brillan al aire libre.`;
+        default:
+          return `${p.vibe}. Rendimiento y presencia óptima para la selección actual.`;
+      }
+    }
+
+    function renderSelection(p, animated) {
+      const card = document.getElementById('resultCard');
+      if (animated) {
+        card.classList.add('scale-95', 'opacity-70');
+        setTimeout(() => {
+          card.classList.remove('scale-95', 'opacity-70');
+        }, 180);
+      }
+
+      document.getElementById('badgeCategory').textContent = p.cat;
+      document.getElementById('perfumeBrand').textContent = p.brand || 'Original';
+      document.getElementById('perfumeName').textContent = p.name || 'Perfume';
+
+      const dupeEl = document.getElementById('perfumeDupe');
+      if (p.dupe && p.dupe.trim() !== '') {
+        dupeEl.innerHTML = `<span class="text-cyan-400 font-bold">Ref / Clon:</span> ${p.dupe}`;
+        dupeEl.classList.remove('hidden');
+      } else {
+        dupeEl.innerHTML = `<span class="text-emerald-400 font-bold">Frasco Original</span>`;
+      }
+
+      const badgesContainer = document.getElementById('cardBadges');
+      badgesContainer.innerHTML = '';
+      if (p.comp) {
+        badgesContainer.innerHTML += `<span class="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-[10px] font-bold text-amber-300 flex items-center gap-0.5">✨ Imán Cumplidos</span>`;
+      }
+      if (p.repeat) {
+        badgesContainer.innerHTML += `<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-[10px] font-bold text-emerald-300 flex items-center gap-0.5">🟢 Repetir Ya</span>`;
+      }
+      if (p.father) {
+        badgesContainer.innerHTML += `<span class="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-[10px] font-bold text-purple-300 flex items-center gap-0.5">👨 Ver a Raúl</span>`;
+      }
+
+      const occasion = document.getElementById('occasionSelect').value;
+      document.getElementById('perfumeWhy').textContent = getExplanationForOccasion(occasion, p);
+
+      const notesContainer = document.getElementById('perfumeNotesContainer');
+      const notesEl = document.getElementById('perfumeNotes');
+      if (p.notes && p.notes.trim() !== '' && p.notes !== 'None') {
+        notesEl.textContent = p.notes;
+        notesContainer.classList.remove('hidden');
+      } else {
+        notesContainer.classList.add('hidden');
+      }
+
+      updateWornButtonState();
+    }
+
+    function updateWornButtonState() {
+      const btn = document.getElementById('btnMarkWorn');
+      const icon = document.getElementById('btnMarkWornIcon');
+      const text = document.getElementById('btnMarkWornText');
+
+      const historyLog = getDailyHistory();
+      const todayDateOnly = new Date().toLocaleDateString('es-ES');
+      let isCurrentWorn = false;
+
+      if (currentSelection) {
+        const found = historyLog.find(item => item.id === currentSelection.id && item.rawDate === todayDateOnly);
+        if (found) isCurrentWorn = true;
+      }
+
+      if (isCurrentWorn) {
+        btn.className = "py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs border border-emerald-400 flex items-center gap-1.5 transition shadow-lg shadow-emerald-900/50";
+        icon.textContent = "🎉";
+        text.textContent = "¡Puesta Hoy!";
+      } else {
+        btn.className = "py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition";
+        icon.textContent = "✅";
+        text.textContent = "Elegir Esta";
+      }
+    }
+
+    function renderAlternatives(chosen) {
+      const altContainer = document.getElementById('alternativeList');
+      altContainer.innerHTML = '';
+
+      const alts = filteredList.filter(p => p.id !== chosen.id).slice(0, 3);
+      if (alts.length === 0) {
+        altContainer.innerHTML = '<div class="text-[11px] text-slate-500 italic">No hay más alternativas con estos filtros tan específicos.</div>';
+        return;
+      }
+
+      alts.forEach(alt => {
+        const item = document.createElement('div');
+        item.className = 'p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 active:scale-98 transition cursor-pointer flex items-center justify-between';
+        item.onclick = () => {
+          currentSelection = alt;
+          renderSelection(alt, true);
+          renderAlternatives(alt);
+        };
+
+        const compIcon = alt.comp ? '✨ ' : '';
+        const repIcon = alt.repeat ? '🟢 ' : '';
+        item.innerHTML = `
+          <div class="truncate pr-2">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">${alt.cat} • ${alt.brand}</div>
+            <div class="text-xs font-bold text-slate-200 truncate">${compIcon}${repIcon}${alt.name}</div>
+            <div class="text-[11px] text-slate-400 truncate">${alt.dupe ? 'Clon: ' + alt.dupe : 'Original'}</div>
+          </div>
+          <button class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-[10px] font-bold shrink-0">
+            Ver ➔
+          </button>
+        `;
+        altContainer.appendChild(item);
+      });
+    }
+
+    function resetFilters() {
+      document.getElementById('occasionSelect').value = 'diario';
+      document.getElementById('onlyCompliments').checked = false;
+      document.getElementById('onlyRepeat').checked = false;
+      autoDetectConditions();
+      fetchLiveWeather();
+    }
+
+    // Daily History Log Engine
+    function getDailyHistory() {
+      const raw = localStorage.getItem('perfumes_daily_log');
+      if (!raw) return [];
+      try {
+        return JSON.parse(raw);
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveDailyHistory(list) {
+      localStorage.setItem('perfumes_daily_log', JSON.stringify(list));
+    }
+
+    function markWornToday() {
+      if (!currentSelection) return;
+      const now = new Date();
+      const todayRaw = now.toLocaleDateString('es-ES');
+      const timeFormatted = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      const dayFormatted = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const occasionName = document.getElementById('occasionSelect').selectedOptions[0].text.split('(')[0].trim();
+      const weatherTemp = document.getElementById('weatherTemp').textContent;
+
+      let log = getDailyHistory();
+      const existingIdx = log.findIndex(item => item.rawDate === todayRaw);
+
+      const entry = {
+        id: currentSelection.id,
+        rawDate: todayRaw,
+        dayTitle: dayFormatted.charAt(0).toUpperCase() + dayFormatted.slice(1),
+        time: timeFormatted,
+        name: currentSelection.name,
+        dupe: currentSelection.dupe,
+        brand: currentSelection.brand,
+        cat: currentSelection.cat,
+        comp: currentSelection.comp,
+        repeat: currentSelection.repeat,
+        occasion: occasionName,
+        weather: weatherTemp
+      };
+
+      if (existingIdx >= 0) {
+        log[existingIdx] = entry;
+      } else {
+        log.unshift(entry);
+      }
+
+      saveDailyHistory(log);
+      updateWornButtonState();
+      loadHistory();
+    }
+
+    function loadHistory() {
+      const log = getDailyHistory();
+      const badge = document.getElementById('historyBadgeCount');
+      if (log.length > 0) {
+        badge.textContent = log.length;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      const todayRaw = new Date().toLocaleDateString('es-ES');
+      const todayEntry = log.find(item => item.rawDate === todayRaw);
+
+      const histContainer = document.getElementById('historyContainer');
+      const histText = document.getElementById('historyText');
+
+      if (todayEntry) {
+        histContainer.classList.remove('hidden');
+        histText.innerHTML = `Llevas puesta hoy: <b class="text-white">${todayEntry.name}</b> (${todayEntry.dupe || todayEntry.brand}) para <i>${todayEntry.occasion}</i> a las ${todayEntry.time}.`;
+      } else if (log.length > 0) {
+        const last = log[0];
+        histContainer.classList.remove('hidden');
+        histText.innerHTML = `Último registro (${last.rawDate}): <b class="text-white">${last.name}</b> (${last.dupe || last.brand}).`;
+      } else {
+        histContainer.classList.add('hidden');
+      }
+    }
+
+    function openHistoryModal() {
+      document.getElementById('historyModal').classList.remove('hidden');
+      renderHistoryModalList();
+    }
+
+    function closeHistoryModal() {
+      document.getElementById('historyModal').classList.add('hidden');
+    }
+
+    function renderHistoryModalList() {
+      const container = document.getElementById('historyLogList');
+      const log = getDailyHistory();
+      container.innerHTML = '';
+
+      document.getElementById('histTotalDays').textContent = log.length;
+
+      if (log.length === 0) {
+        document.getElementById('histTopPerfume').textContent = '-';
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-500 space-y-2">
+            <span class="text-3xl block">🧴</span>
+            <p class="font-medium text-slate-400">Aún no has registrado ninguna colonia.</p>
+            <p class="text-[11px] text-slate-500">Pulsa en "Elegir Esta" en la pantalla principal para ir guardando lo que te pones cada día.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const counts = {};
+      log.forEach(item => {
+        const k = `${item.name}${item.dupe ? ` (${item.dupe})` : ''}`;
+        counts[k] = (counts[k] || 0) + 1;
+      });
+      let topName = '-';
+      let topCount = 0;
+      for (const [k, c] of Object.entries(counts)) {
+        if (c > topCount) { topCount = c; topName = k; }
+      }
+      document.getElementById('histTopPerfume').textContent = `${topName} (${topCount}x)`;
+
+      log.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = "p-3 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1.5 relative overflow-hidden";
+        
+        const isToday = item.rawDate === new Date().toLocaleDateString('es-ES');
+        const todayBadge = isToday ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">HOY</span>' : '';
+        const compBadge = item.comp ? '✨ ' : '';
+        const repBadge = item.repeat ? '🟢 ' : '';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 text-slate-400 font-semibold text-[11px]">
+              <span>📅 ${item.dayTitle}</span>
+              ${todayBadge}
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] text-slate-500 font-mono">${item.time}</span>
+              <button onclick="removeHistoryItem(${index})" title="Eliminar este día" class="text-slate-600 hover:text-red-400 text-xs px-1">✕</button>
+            </div>
+          </div>
+          <div class="flex items-start justify-between gap-2 pt-0.5">
+            <div>
+              <div class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">${item.cat} • ${item.brand}</div>
+              <div class="text-sm font-extrabold text-white leading-tight">${compBadge}${repBadge}${item.name}</div>
+              <div class="text-xs text-slate-300 font-medium">${item.dupe ? 'Ref: ' + item.dupe : 'Frasco Original'}</div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-amber-300 font-bold block">${item.weather || ''}</span>
+            </div>
+          </div>
+          <div class="pt-1 text-[11px] text-slate-400 flex items-center justify-between border-t border-slate-900">
+            <span>Motivo: <b class="text-slate-300">${item.occasion}</b></span>
+            <button onclick="applyFromHistory(${item.id})" class="text-[10px] font-bold text-cyan-400 hover:underline">Ver ficha ➔</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function removeHistoryItem(index) {
+      let log = getDailyHistory();
+      log.splice(index, 1);
+      saveDailyHistory(log);
+      renderHistoryModalList();
+      loadHistory();
+      updateWornButtonState();
+    }
+
+    function clearHistoryLog() {
+      if (confirm('¿Estás seguro de que deseas borrar todo el historial de colonias?')) {
+        saveDailyHistory([]);
+        renderHistoryModalList();
+        loadHistory();
+        updateWornButtonState();
+      }
+    }
+
+    function applyFromHistory(perfumeId) {
+      closeHistoryModal();
+      const p = PERFUMES.find(x => x.id === perfumeId);
+      if (p) {
+        currentSelection = p;
+        renderSelection(p, true);
+        renderAlternatives(p);
+      }
+    }
+
+    // Modal Catalog Functions
+    function openCatalogModal() {
+      document.getElementById('catalogModal').classList.remove('hidden');
+      renderCatalogList(PERFUMES);
+    }
+
+    function closeCatalogModal() {
+      document.getElementById('catalogModal').classList.add('hidden');
+    }
+
+    function renderCatalogList(list) {
+      const container = document.getElementById('catalogList');
+      container.innerHTML = '';
+      if (list.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-slate-500">No se encontraron fragancias</div>';
+        return;
+      }
+      list.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'py-2 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 px-2 rounded-lg';
+        item.onclick = () => {
+          closeCatalogModal();
+          currentSelection = p;
+          renderSelection(p, true);
+          renderAlternatives(p);
+        };
+        item.innerHTML = `
+          <div class="pr-2">
+            <div class="text-[10px] text-cyan-400 font-bold uppercase">${p.cat} • ${p.brand}</div>
+            <div class="text-xs font-bold text-white">${p.comp ? '✨ ' : ''}${p.repeat ? '🟢 ' : ''}${p.name}</div>
+            <div class="text-[11px] text-slate-400">${p.dupe ? 'Clon: ' + p.dupe : 'Original'}</div>
+          </div>
+          <span class="text-slate-500 text-xs">➔</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function filterCatalogModal() {
+      const q = document.getElementById('catalogSearch').value.toLowerCase().trim();
+      const filtered = PERFUMES.filter(p => {
+        const full = `${p.brand} ${p.name} ${p.dupe} ${p.cat} ${p.notes}`.toLowerCase();
+        return full.includes(q);
+      });
+      renderCatalogList(filtered);
+    }
+  </script>
+</body>
+</html>
