@@ -157,12 +157,12 @@
         </div>
       </div>
 
-      <!-- Perfume Names -->
+      <!-- Perfume Names (Clear prioritization of actual bottle / clone name vs inspiration) -->
       <div class="mt-1">
-        <div class="text-[11px] font-semibold text-cyan-400 tracking-wide uppercase" id="perfumeBrand">Mugler / Creed</div>
-        <h2 class="text-xl font-extrabold text-white leading-tight mt-0.5 tracking-tight" id="perfumeName">Mugler Cologne / Original Vetiver</h2>
-        <div class="text-sm font-semibold text-slate-300 mt-0.5 flex items-center gap-1.5" id="perfumeDupe">
-          <span class="text-cyan-400">Clon:</span> My Soul Virent (100ml)
+        <div class="text-[11px] font-bold text-cyan-400 tracking-wide uppercase" id="perfumeMainBrand">ZARA</div>
+        <h2 class="text-xl font-extrabold text-white leading-tight mt-0.5 tracking-tight" id="perfumeMainTitle">Vibrant Leather</h2>
+        <div class="text-xs font-medium text-slate-300 mt-1 flex items-center gap-1.5" id="perfumeSubInspiration">
+          <span class="text-slate-400">Inspirado en:</span> <b class="text-slate-200">Creed - Aventus</b>
         </div>
       </div>
 
@@ -229,14 +229,14 @@
 
   <!-- Modal 1: Daily History Log (Registro Diario) -->
   <div id="historyModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex flex-col justify-end sm:justify-center p-0 sm:p-4 transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full mx-auto max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full mx-auto max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
       <!-- Modal Header -->
       <div class="p-4 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-xl">📅</span>
           <div>
             <h3 class="text-base font-bold text-white">Registro Diario de Colonias</h3>
-            <p class="text-[11px] text-slate-400">Historial ordenado por fecha de uso</p>
+            <p class="text-[11px] text-slate-400">Guardado permanente en este dispositivo</p>
           </div>
         </div>
         <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-sm hover:bg-slate-700">✕</button>
@@ -255,10 +255,43 @@
         </div>
         <div class="h-6 w-px bg-slate-800"></div>
         <div>
-          <button onclick="clearHistoryLog()" class="px-2 py-1 rounded-lg bg-red-950/40 border border-red-900/60 text-red-400 text-[10px] font-semibold hover:bg-red-900/50 transition">
-            Borrar todo
+          <button onclick="toggleManualAddSection()" class="px-2.5 py-1 rounded-lg bg-cyan-950/70 border border-cyan-700/60 text-cyan-300 text-[10px] font-bold hover:bg-cyan-900/60 transition flex items-center gap-1">
+            <span>➕ Añadir Día</span>
           </button>
         </div>
+      </div>
+
+      <!-- Collapsible Form: Add Past Day Manually -->
+      <div id="manualAddSection" class="p-3 bg-slate-800/50 border-b border-slate-700 space-y-2 hidden text-xs">
+        <div class="font-bold text-cyan-300 flex items-center justify-between">
+          <span>Registrar un día pasado o manualmente:</span>
+          <button onclick="toggleManualAddSection()" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-0.5">Fecha</label>
+            <input type="date" id="manualDateInput" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-0.5">Motivo / Lugar</label>
+            <select id="manualOccasionInput" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+              <option value="💼 Oficina, Trabajo & Negocios">💼 Oficina / Trabajo</option>
+              <option value="🌅 Diario, Paseo matutino, Mandados o Casa">🌅 Diario / Casa</option>
+              <option value="⭐ Visitar a mi padre Raúl">⭐ Visitar a Raúl</option>
+              <option value="🌆 Tardeo, Terrazas con amigos">🌆 Tardeo / Terraza</option>
+              <option value="🌙 Noche, Citas o Copas">🌙 Noche / Fiesta</option>
+              <option value="🏃 Gimnasio o Deporte">🏃 Gimnasio</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-400 mb-0.5">Colonia utilizada</label>
+          <select id="manualPerfumeInput" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+          </select>
+        </div>
+        <button onclick="saveManualHistoryEntry()" class="w-full py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow">
+          Guardar en el Historial
+        </button>
       </div>
 
       <!-- Daily History Items List -->
@@ -266,8 +299,13 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-3 border-t border-slate-800 bg-slate-900 text-center">
-        <button onclick="closeHistoryModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200">Volver</button>
+      <div class="p-3 border-t border-slate-800 bg-slate-900 flex items-center justify-between gap-2">
+        <button onclick="clearHistoryLog()" class="px-3 py-2 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-[11px] font-semibold hover:bg-red-900/40 transition">
+          Borrar todo
+        </button>
+        <button onclick="closeHistoryModal()" class="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-200">
+          Cerrar
+        </button>
       </div>
     </div>
   </div>
@@ -306,8 +344,53 @@
     let filteredList = [];
     let liveWeather = null;
 
+    // Seed initial history entries requested by Raul (Wed 21, Thu 22, Fri 23 Oct 2026)
+    const INITIAL_SEED_HISTORY = [
+      {
+        id: 55,
+        rawDate: "23/10/2026",
+        dayTitle: "Viernes, 23 de octubre de 2026",
+        time: "08:00",
+        name: "Aventus",
+        dupe: "Vibrant Leather",
+        brand: "Creed",
+        cat: "ZARA",
+        comp: true,
+        repeat: true,
+        occasion: "💼 Oficina, Trabajo & Negocios",
+        weather: "20°C"
+      },
+      {
+        id: 96,
+        rawDate: "22/10/2026",
+        dayTitle: "Jueves, 22 de octubre de 2026",
+        time: "08:00",
+        name: "Aventus / Explorer / Bleu / Sauvage",
+        dupe: "Don Algodón - Eau de Parfum Hombre",
+        brand: "Creed / Montblanc / Channel / Dior",
+        cat: "DUPES VARIOS",
+        comp: false,
+        repeat: false,
+        occasion: "💼 Oficina, Trabajo & Negocios",
+        weather: "21°C"
+      },
+      {
+        id: 59,
+        rawDate: "21/10/2026",
+        dayTitle: "Miércoles, 21 de octubre de 2026",
+        time: "09:00",
+        name: "Dyptikos",
+        dupe: "Terra Profonda Black Fig & Basil",
+        brand: "Phylosykos",
+        cat: "ZARA",
+        comp: false,
+        repeat: true,
+        occasion: "🌅 Diario, Paseo matutino, Mandados o Casa",
+        weather: "22°C"
+      }
+    ];
+
     window.addEventListener('DOMContentLoaded', () => {
-      // Load cached remote perfumes if available
       const cached = localStorage.getItem('perfumes_remote_cache');
       if (cached) {
         try {
@@ -319,16 +402,65 @@
         } catch(e) {}
       }
 
+      ensureSeedHistory();
       autoDetectConditions();
       loadHistory();
       fetchLiveWeather();
-      // Auto sync with live Google Sheet in background
       syncWithGoogleSheet(false);
     });
+
+    function ensureSeedHistory() {
+      let currentLog = getDailyHistory();
+      let modified = false;
+      // Add seed entries if their rawDate is not yet present
+      INITIAL_SEED_HISTORY.forEach(seedItem => {
+        const exists = currentLog.some(x => x.rawDate === seedItem.rawDate);
+        if (!exists) {
+          currentLog.push(seedItem);
+          modified = true;
+        }
+      });
+      if (modified) {
+        // Sort descending by date (DD/MM/YYYY)
+        currentLog.sort((a, b) => {
+          const pa = a.rawDate.split('/').reverse().join('');
+          const pb = b.rawDate.split('/').reverse().join('');
+          return pb.localeCompare(pa);
+        });
+        saveDailyHistory(currentLog);
+      }
+    }
 
     function updateTotalsUI() {
       document.getElementById('headerTotal').textContent = PERFUMES.length;
       document.getElementById('catalogTotal').textContent = PERFUMES.length;
+    }
+
+    // Format Perfume Display clearly so Dupes show their actual Dupe Name prominently, never misleadingly as Original
+    function getFormattedDisplay(p) {
+      const isOriginalCat = (p.cat || '').toUpperCase() === 'ORIGINALES';
+      const hasDupeText = p.dupe && p.dupe.trim() !== '' && p.dupe !== 'None';
+
+      if (hasDupeText) {
+        return {
+          topBrand: p.cat,
+          mainTitle: p.dupe,
+          subText: `<span class="text-slate-400">Inspirado en:</span> <b class="text-cyan-300">${p.brand} - ${p.name}</b>`
+        };
+      } else if (isOriginalCat) {
+        return {
+          topBrand: `${p.brand} (ORIGINAL)`,
+          mainTitle: p.name,
+          subText: `<span class="text-emerald-400 font-bold">✓ Perfume Original en tu colección</span>`
+        };
+      } else {
+        // E.g. Aromas Artesanales without specific code in col 3
+        return {
+          topBrand: `CLON ${p.cat}`,
+          mainTitle: `${p.name} (${p.cat})`,
+          subText: `<span class="text-slate-400">Equivalencia de:</span> <b class="text-cyan-300">${p.brand} - ${p.name}</b>`
+        };
+      }
     }
 
     // ==========================================
@@ -351,17 +483,6 @@
         const rows = data.table.rows;
 
         const categories = ['AROMAS ATERSANALES', 'AROMAS ARTESANALES', 'CARAVAN', 'PERFUMARE', 'LEFTIES', 'ZARA', 'MERCADONA', 'ALDI', 'LIDL', 'DUPES VARIOS', 'ORIGINALES', 'PERFUMES ARABES'];
-        
-        // Exact list of finished signatures in your sheet
-        const finishedKeywords = [
-          'agua de gio', 'allure sport', 'invictus (aromas)', 'sauvage de dior muestra',
-          'platinum egoist', 'aura de loewe', 'bambú', 'eau sauvage',
-          'solo cedro', 'polo', 'bvlgari', "l'eau d'issey pour homme",
-          'eternity (1129', 'como tu fuerza', 'sesgo', 'viento como tu',
-          'u de adolfo dominguez', 'ck one essence', 'legend spirit',
-          'torino 21', 'silver mountain water (perfumare', 'sillage',
-          'jean lowe immortel', 'amber oud aqua dubai', 'turathi blue'
-        ];
 
         let currentCat = null;
         const newPerfumes = [];
@@ -372,30 +493,45 @@
           
           const val1 = (cells[0] && cells[0].v !== null) ? String(cells[0].v).trim() : '';
           const val2 = (cells[1] && cells[1].v !== null) ? String(cells[1].v).trim() : '';
-          const val3 = (cells[2] && cells[2].v !== null) ? String(cells[2].v).trim() : '';
+          let val3 = (cells[2] && cells[2].v !== null) ? String(cells[2].v).trim() : '';
+          if (val3.endsWith('.0')) val3 = val3.slice(0, -2);
           const val9 = (cells[8] && cells[8].v !== null) ? String(cells[8].v).trim() : '';
 
           if (categories.includes(val1.toUpperCase())) {
-            currentCat = val1;
+            currentCat = val1.toUpperCase();
             continue;
           }
 
           if (!val1 && !val2 && !val3) continue;
-
-          // Check if legend row
           if (val2.includes('Perfumes clones terminados') || val2.includes('Perfumes aun probando')) continue;
 
-          const combined = `${val1} ${val2} ${val3}`.toLowerCase();
+          // Exact check for the 26 finished rows so we never include finished bottles like Aromas Artesanales Aventus
+          const catUp = (currentCat || '').toUpperCase();
+          const v1Low = val1.toLowerCase();
+          const v2Low = val2.toLowerCase();
+          const v3Low = val3.toLowerCase();
+          const combined = `${v1Low} ${v2Low} ${v3Low}`;
 
-          // Check finished
-          const isFinished = finishedKeywords.some(k => combined.includes(k));
+          let isFinished = false;
+          if (catUp.includes('AROMAS')) {
+            // In Aromas Artesanales, only these 5 are active: Genave 149, Barrax 158, Quiros 181, Layos 117, Green Irish Tweed, Cool Water 1135
+            const activeAromas = ['genave', 'barrax', 'quiros', 'layos', 'green irish', '1135'];
+            if (!activeAromas.some(k => combined.includes(k))) isFinished = true;
+          } else if (catUp === 'PERFUMARE') {
+            if (['237', '8617', '6143'].some(k => combined.includes(k))) isFinished = true;
+          } else if (catUp === 'MERCADONA') {
+            if (['fuerza', 'sesgo', 'viento'].some(k => combined.includes(k))) isFinished = true;
+          } else if (catUp === 'ORIGINALES') {
+            if (['ck one essence', 'u de adolfo'].some(k => combined.includes(k))) isFinished = true;
+          } else if (catUp === 'PERFUMES ARABES') {
+            if (['immortel', 'aqua dubai', 'sillage', 'turathi blue'].some(k => combined.includes(k))) isFinished = true;
+          }
+
           if (isFinished) continue;
 
-          // Check compliments & repeat
-          const isComp = ['fierce', 'aventus', 'voyage', 'prada', 'agua fresca', 'vibrant leather'].some(k => combined.includes(k));
-          const isRepeat = ['polo blue', 'fierce', 'dnkny', 'acqua di gio', 'vibrant leather', 'sunrise', 'terra profonda', 'lisboa', 'seoul', 'acqua fresh', 'voyage', "prada l'homme", 'agua fresca', 'eternity', 'blue iconic'].some(k => combined.includes(k));
+          const isComp = ['fierce', 'vibrant leather', 'voyage', "prada l'homme", 'agua fresca'].some(k => combined.includes(k));
+          const isRepeat = ['polo blue', 'fierce', 'dnkny', 'carvan nº 15', 'vibrant leather', 'sunrise', 'terra profonda', 'lisboa', 'seoul', 'acqua fresh', 'voyage', "prada l'homme", 'agua fresca', 'eternity', 'blue iconic', 'intense man pure parfum'].some(k => combined.includes(k));
 
-          // Classify seasons, times, occasions
           const { seasons, times, occasions, isFather, vibe, block } = classifyFragrance(val1, val2, val3);
 
           newPerfumes.push({
@@ -421,13 +557,13 @@
           localStorage.setItem('perfumes_remote_cache', JSON.stringify(newPerfumes));
           updateTotalsUI();
           badge.className = "w-2 h-2 rounded-full bg-emerald-400";
-          if (manual) alert(`¡Sincronizado en directo con Google Sheet! Se han cargado ${newPerfumes.length} perfumes activos.`);
+          if (manual) alert(`¡Sincronizado en directo con Google Sheet! ${newPerfumes.length} perfumes activos en stock.`);
           applyFilters(false);
         }
       } catch (err) {
         console.log('Error syncing live sheet:', err);
         badge.className = "w-2 h-2 rounded-full bg-amber-400";
-        if (manual) alert('Modo sin conexión: Usando base de datos interna y caché guardada.');
+        if (manual) alert('Modo sin conexión: Usando base de datos interna.');
       } finally {
         if (syncBtn) syncBtn.classList.remove('animate-spin');
       }
@@ -566,7 +702,6 @@
 
     function autoDetectConditions() {
       const now = new Date();
-      const month = now.getMonth();
       const hour = now.getHours();
 
       let detectedTime = 'manana';
@@ -709,17 +844,11 @@
         }, 180);
       }
 
+      const disp = getFormattedDisplay(p);
       document.getElementById('badgeCategory').textContent = p.cat;
-      document.getElementById('perfumeBrand').textContent = p.brand || 'Original';
-      document.getElementById('perfumeName').textContent = p.name || 'Perfume';
-
-      const dupeEl = document.getElementById('perfumeDupe');
-      if (p.dupe && p.dupe.trim() !== '') {
-        dupeEl.innerHTML = `<span class="text-cyan-400 font-bold">Ref / Clon:</span> ${p.dupe}`;
-        dupeEl.classList.remove('hidden');
-      } else {
-        dupeEl.innerHTML = `<span class="text-emerald-400 font-bold">Frasco Original</span>`;
-      }
+      document.getElementById('perfumeMainBrand').textContent = disp.topBrand;
+      document.getElementById('perfumeMainTitle').textContent = disp.mainTitle;
+      document.getElementById('perfumeSubInspiration').innerHTML = disp.subText;
 
       const badgesContainer = document.getElementById('cardBadges');
       badgesContainer.innerHTML = '';
@@ -758,7 +887,7 @@
       let isCurrentWorn = false;
 
       if (currentSelection) {
-        const found = historyLog.find(item => item.id === currentSelection.id && item.rawDate === todayDateOnly);
+        const found = historyLog.find(item => (item.id === currentSelection.id || (item.dupe && item.dupe === currentSelection.dupe)) && item.rawDate === todayDateOnly);
         if (found) isCurrentWorn = true;
       }
 
@@ -784,6 +913,7 @@
       }
 
       alts.forEach(alt => {
+        const disp = getFormattedDisplay(alt);
         const item = document.createElement('div');
         item.className = 'p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 active:scale-98 transition cursor-pointer flex items-center justify-between';
         item.onclick = () => {
@@ -796,9 +926,9 @@
         const repIcon = alt.repeat ? '🟢 ' : '';
         item.innerHTML = `
           <div class="truncate pr-2">
-            <div class="text-[10px] text-slate-400 uppercase font-semibold">${alt.cat} • ${alt.brand}</div>
-            <div class="text-xs font-bold text-slate-200 truncate">${compIcon}${repIcon}${alt.name}</div>
-            <div class="text-[11px] text-slate-400 truncate">${alt.dupe ? 'Clon: ' + alt.dupe : 'Original'}</div>
+            <div class="text-[10px] text-cyan-400 uppercase font-bold">${disp.topBrand}</div>
+            <div class="text-xs font-extrabold text-white truncate">${compIcon}${repIcon}${disp.mainTitle}</div>
+            <div class="text-[11px] text-slate-400 truncate">${disp.subText}</div>
           </div>
           <button class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg text-[10px] font-bold shrink-0">
             Ver ➔
@@ -869,6 +999,76 @@
       loadHistory();
     }
 
+    function toggleManualAddSection() {
+      const sec = document.getElementById('manualAddSection');
+      sec.classList.toggle('hidden');
+      if (!sec.classList.contains('hidden')) {
+        // Set default date to today
+        document.getElementById('manualDateInput').valueAsDate = new Date();
+        // Populate perfume select
+        const sel = document.getElementById('manualPerfumeInput');
+        sel.innerHTML = '';
+        PERFUMES.forEach(p => {
+          const disp = getFormattedDisplay(p);
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${disp.mainTitle} (${p.cat} - ${p.name})`;
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    function saveManualHistoryEntry() {
+      const dateVal = document.getElementById('manualDateInput').value; // YYYY-MM-DD
+      if (!dateVal) { alert('Selecciona una fecha'); return; }
+      const parts = dateVal.split('-');
+      const dObj = new Date(parts[0], parts[1] - 1, parts[2], 9, 0);
+      const rawDate = dObj.toLocaleDateString('es-ES');
+      const dayFormatted = dObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const occVal = document.getElementById('manualOccasionInput').value;
+      const perfId = parseInt(document.getElementById('manualPerfumeInput').value, 10);
+
+      const p = PERFUMES.find(x => x.id === perfId);
+      if (!p) return;
+
+      let log = getDailyHistory();
+      const existingIdx = log.findIndex(item => item.rawDate === rawDate);
+
+      const entry = {
+        id: p.id,
+        rawDate: rawDate,
+        dayTitle: dayFormatted.charAt(0).toUpperCase() + dayFormatted.slice(1),
+        time: "09:00",
+        name: p.name,
+        dupe: p.dupe,
+        brand: p.brand,
+        cat: p.cat,
+        comp: p.comp,
+        repeat: p.repeat,
+        occasion: occVal,
+        weather: document.getElementById('weatherTemp').textContent || '21°C'
+      };
+
+      if (existingIdx >= 0) {
+        log[existingIdx] = entry;
+      } else {
+        log.push(entry);
+      }
+
+      // Sort descending by date
+      log.sort((a, b) => {
+        const pa = a.rawDate.split('/').map(n => n.padStart(2, '0')).reverse().join('');
+        const pb = b.rawDate.split('/').map(n => n.padStart(2, '0')).reverse().join('');
+        return pb.localeCompare(pa);
+      });
+
+      saveDailyHistory(log);
+      document.getElementById('manualAddSection').classList.add('hidden');
+      renderHistoryModalList();
+      loadHistory();
+      updateWornButtonState();
+    }
+
     function loadHistory() {
       const log = getDailyHistory();
       const badge = document.getElementById('historyBadgeCount');
@@ -886,12 +1086,14 @@
       const histText = document.getElementById('historyText');
 
       if (todayEntry) {
+        const dispName = todayEntry.dupe || todayEntry.name;
         histContainer.classList.remove('hidden');
-        histText.innerHTML = `Llevas puesta hoy: <b class="text-white">${todayEntry.name}</b> (${todayEntry.dupe || todayEntry.brand}) para <i>${todayEntry.occasion}</i> a las ${todayEntry.time}.`;
+        histText.innerHTML = `Llevas puesta hoy: <b class="text-white">${dispName}</b> (${todayEntry.cat}) para <i>${todayEntry.occasion}</i>.`;
       } else if (log.length > 0) {
         const last = log[0];
+        const dispName = last.dupe || last.name;
         histContainer.classList.remove('hidden');
-        histText.innerHTML = `Último registro (${last.rawDate}): <b class="text-white">${last.name}</b> (${last.dupe || last.brand}).`;
+        histText.innerHTML = `Último registro (${last.rawDate}): <b class="text-white">${dispName}</b> (${last.cat}).`;
       } else {
         histContainer.classList.add('hidden');
       }
@@ -919,7 +1121,7 @@
           <div class="text-center py-12 text-slate-500 space-y-2">
             <span class="text-3xl block">🧴</span>
             <p class="font-medium text-slate-400">Aún no has registrado ninguna colonia.</p>
-            <p class="text-[11px] text-slate-500">Pulsa en "Elegir Esta" en la pantalla principal para ir guardando lo que te pones cada día.</p>
+            <p class="text-[11px] text-slate-500">Pulsa en "Elegir Esta" o en "➕ Añadir Día" para guardar tus colonias por fecha.</p>
           </div>
         `;
         return;
@@ -927,7 +1129,7 @@
 
       const counts = {};
       log.forEach(item => {
-        const k = `${item.name}${item.dupe ? ` (${item.dupe})` : ''}`;
+        const k = item.dupe ? `${item.dupe} (${item.cat})` : `${item.name}`;
         counts[k] = (counts[k] || 0) + 1;
       });
       let topName = '-';
@@ -938,6 +1140,7 @@
       document.getElementById('histTopPerfume').textContent = `${topName} (${topCount}x)`;
 
       log.forEach((item, index) => {
+        const disp = getFormattedDisplay(item);
         const card = document.createElement('div');
         card.className = "p-3 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1.5 relative overflow-hidden";
         
@@ -959,9 +1162,9 @@
           </div>
           <div class="flex items-start justify-between gap-2 pt-0.5">
             <div>
-              <div class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">${item.cat} • ${item.brand}</div>
-              <div class="text-sm font-extrabold text-white leading-tight">${compBadge}${repBadge}${item.name}</div>
-              <div class="text-xs text-slate-300 font-medium">${item.dupe ? 'Ref: ' + item.dupe : 'Frasco Original'}</div>
+              <div class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider">${disp.topBrand}</div>
+              <div class="text-sm font-extrabold text-white leading-tight">${compBadge}${repBadge}${disp.mainTitle}</div>
+              <div class="text-[11px] text-slate-300 mt-0.5">${disp.subText}</div>
             </div>
             <div class="text-right shrink-0">
               <span class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-amber-300 font-bold block">${item.weather || ''}</span>
@@ -1022,6 +1225,7 @@
         return;
       }
       list.forEach(p => {
+        const disp = getFormattedDisplay(p);
         const item = document.createElement('div');
         item.className = 'py-2 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 px-2 rounded-lg';
         item.onclick = () => {
@@ -1032,9 +1236,9 @@
         };
         item.innerHTML = `
           <div class="pr-2">
-            <div class="text-[10px] text-cyan-400 font-bold uppercase">${p.cat} • ${p.brand}</div>
-            <div class="text-xs font-bold text-white">${p.comp ? '✨ ' : ''}${p.repeat ? '🟢 ' : ''}${p.name}</div>
-            <div class="text-[11px] text-slate-400">${p.dupe ? 'Clon: ' + p.dupe : 'Original'}</div>
+            <div class="text-[10px] text-cyan-400 font-bold uppercase">${disp.topBrand}</div>
+            <div class="text-xs font-extrabold text-white">${p.comp ? '✨ ' : ''}${p.repeat ? '🟢 ' : ''}${disp.mainTitle}</div>
+            <div class="text-[11px] text-slate-400">${disp.subText}</div>
           </div>
           <span class="text-slate-500 text-xs">➔</span>
         `;
