@@ -235,11 +235,14 @@
         <div class="flex items-center gap-2">
           <span class="text-xl">📅</span>
           <div>
-            <h3 class="text-base font-bold text-white">Registro Diario de Colonias</h3>
-            <p class="text-[11px] text-slate-400">Guardado permanente en este dispositivo</p>
+            <h3 class="text-base font-bold text-white">Registro Diario Unificado</h3>
+            <p id="cloudHistoryStatus" class="text-[11px] text-emerald-400 font-medium">☁️ Sincronizado en la nube (Móvil + PC)</p>
           </div>
         </div>
-        <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-sm hover:bg-slate-700">✕</button>
+        <div class="flex items-center gap-1.5">
+          <button onclick="syncHistoryWithCloud(true)" title="Sincronizar historial con la nube" class="w-8 h-8 rounded-full bg-slate-800 text-cyan-400 flex items-center justify-center text-xs hover:bg-slate-700">🔄</button>
+          <button onclick="closeHistoryModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-sm hover:bg-slate-700">✕</button>
+        </div>
       </div>
 
       <!-- History Stats Strip -->
@@ -412,26 +415,23 @@
       loadHistory();
       fetchLiveWeather();
       syncWithGoogleSheet(false);
+      syncHistoryWithCloud(false);
     });
 
     function ensureSeedHistory() {
       let currentLog = getDailyHistory();
+      const deletedMap = getDeletedDatesMap();
       let modified = false;
-      // Add seed entries if their rawDate is not yet present
       INITIAL_SEED_HISTORY.forEach(seedItem => {
+        if (deletedMap[seedItem.rawDate]) return;
         const exists = currentLog.some(x => x.rawDate === seedItem.rawDate);
         if (!exists) {
-          currentLog.push(seedItem);
+          currentLog.push(Object.assign({ ts: 1700000000000 }, seedItem));
           modified = true;
         }
       });
       if (modified) {
-        // Sort descending by date (DD/MM/YYYY)
-        currentLog.sort((a, b) => {
-          const pa = a.rawDate.split('/').reverse().join('');
-          const pb = b.rawDate.split('/').reverse().join('');
-          return pb.localeCompare(pa);
-        });
+        sortHistoryDescending(currentLog);
         saveDailyHistory(currentLog);
       }
     }
@@ -750,7 +750,10 @@
           localStorage.setItem('perfumes_remote_cache_v4', JSON.stringify(newPerfumes));
           updateTotalsUI();
           badge.className = "w-2 h-2 rounded-full bg-emerald-400";
-          if (manual) alert(`¡Sincronizado en directo leyendo los colores de tu Google Sheet! ${newPerfumes.length} perfumes activos en stock.`);
+          if (manual) {
+            await syncHistoryWithCloud(true);
+            alert(`¡Sincronizado en directo (Excel + Historial en la nube)! ${newPerfumes.length} perfumes activos en stock.`);
+          }
           const stillValid = currentSelection && PERFUMES.some(p => p.id === currentSelection.id && p.name === currentSelection.name);
           applyFilters(!stillValid);
           if (stillValid) {
@@ -1148,7 +1151,40 @@
       fetchLiveWeather();
     }
 
-    // Daily History Log Engine
+    // ==========================================
+    // UNIFIED CLOUD DAILY HISTORY ENGINE (Mobile + PC Sync)
+    // ==========================================
+    const CLOUD_HISTORY_URL = 'https://textdb.dev/api/data/aromamatch-rgr-7cd4e809-b53b-4ff7';
+
+    function toAsciiJson(obj) {
+      return JSON.stringify(obj).replace(/[\u007F-\uFFFF]/g, chr =>
+        "\\u" + ("0000" + chr.charCodeAt(0).toString(16)).slice(-4)
+      );
+    }
+
+    function sortHistoryDescending(list) {
+      list.sort((a, b) => {
+        const pa = (a.rawDate || '').split('/').map(n => n.padStart(2, '0')).reverse().join('');
+        const pb = (b.rawDate || '').split('/').map(n => n.padStart(2, '0')).reverse().join('');
+        return pb.localeCompare(pa);
+      });
+      return list;
+    }
+
+    function getDeletedDatesMap() {
+      const raw = localStorage.getItem('perfumes_deleted_dates');
+      if (!raw) return {};
+      try {
+        return JSON.parse(raw) || {};
+      } catch(e) {
+        return {};
+      }
+    }
+
+    function saveDeletedDatesMap(map) {
+      localStorage.setItem('perfumes_deleted_dates', JSON.stringify(map));
+    }
+
     function getDailyHistory() {
       const raw = localStorage.getItem('perfumes_daily_log');
       if (!raw) return [];
@@ -1161,6 +1197,115 @@
 
     function saveDailyHistory(list) {
       localStorage.setItem('perfumes_daily_log', JSON.stringify(list));
+    }
+
+    async function pushHistoryToCloud() {
+      const statusEl = document.getElementById('cloudHistoryStatus');
+      if (statusEl) {
+        statusEl.textContent = '☁️ Guardando en la nube...';
+        statusEl.className = 'text-[11px] text-amber-400 font-medium';
+      }
+
+      const payload = {
+        updatedAt: Date.now(),
+        deletedDates: getDeletedDatesMap(),
+        items: getDailyHistory()
+      };
+
+      try {
+        const resp = await fetch(CLOUD_HISTORY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: toAsciiJson(payload)
+        });
+        if (!resp.ok) throw new Error('Cloud save error');
+        if (statusEl) {
+          statusEl.textContent = '☁️ Sincronizado en la nube (Móvil + PC)';
+          statusEl.className = 'text-[11px] text-emerald-400 font-medium';
+        }
+      } catch (err) {
+        console.log('Error pushing history to cloud:', err);
+        if (statusEl) {
+          statusEl.textContent = '⚠️ Guardado local (sin conexión a nube)';
+          statusEl.className = 'text-[11px] text-amber-400 font-medium';
+        }
+      }
+    }
+
+    async function syncHistoryWithCloud(manual = false) {
+      const statusEl = document.getElementById('cloudHistoryStatus');
+      if (manual && statusEl) {
+        statusEl.textContent = '🔄 Unificando historial Móvil + PC...';
+        statusEl.className = 'text-[11px] text-cyan-400 font-medium';
+      }
+
+      try {
+        const resp = await fetch(`${CLOUD_HISTORY_URL}?t=${Date.now()}`);
+        if (!resp.ok) throw new Error('Cloud fetch error');
+        const text = await resp.text();
+        if (!text || !text.trim()) {
+          await pushHistoryToCloud();
+          return;
+        }
+
+        const remoteData = JSON.parse(text);
+        const cloudItems = Array.isArray(remoteData) ? remoteData : (remoteData.items || []);
+        const cloudDeleted = (!Array.isArray(remoteData) && remoteData.deletedDates && typeof remoteData.deletedDates === 'object' && !Array.isArray(remoteData.deletedDates))
+          ? remoteData.deletedDates
+          : {};
+
+        const localItems = getDailyHistory();
+        const localDeleted = getDeletedDatesMap();
+
+        // 1. Merge deleted dates tombstones
+        const mergedDeleted = Object.assign({}, cloudDeleted);
+        for (const [d, ts] of Object.entries(localDeleted)) {
+          if (!mergedDeleted[d] || ts > mergedDeleted[d]) {
+            mergedDeleted[d] = ts;
+          }
+        }
+
+        // 2. Merge history items by rawDate (newest timestamp wins, respecting deletions)
+        const byDate = {};
+        const allCandidates = [...cloudItems, ...localItems];
+        for (const item of allCandidates) {
+          if (!item || !item.rawDate) continue;
+          const itemTs = item.ts || 1700000000000;
+          const delTs = mergedDeleted[item.rawDate] || 0;
+          if (delTs > itemTs) continue; // Was deleted after creation
+
+          const existing = byDate[item.rawDate];
+          if (!existing || itemTs >= (existing.ts || 1700000000000)) {
+            byDate[item.rawDate] = Object.assign({}, item, { ts: itemTs });
+          }
+        }
+
+        const mergedList = sortHistoryDescending(Object.values(byDate));
+        saveDeletedDatesMap(mergedDeleted);
+        saveDailyHistory(mergedList);
+
+        loadHistory();
+        updateWornButtonState();
+        if (!document.getElementById('historyModal').classList.contains('hidden')) {
+          renderHistoryModalList();
+        }
+
+        // If local device had entries or deletions not yet in the cloud, push unified state back
+        const cloudSig = JSON.stringify(cloudItems.map(x => `${x.rawDate}:${x.id}:${x.ts || 0}`));
+        const mergedSig = JSON.stringify(mergedList.map(x => `${x.rawDate}:${x.id}:${x.ts || 0}`));
+        if (cloudSig !== mergedSig || Object.keys(mergedDeleted).length !== Object.keys(cloudDeleted).length) {
+          await pushHistoryToCloud();
+        } else if (statusEl) {
+          statusEl.textContent = '☁️ Sincronizado en la nube (Móvil + PC)';
+          statusEl.className = 'text-[11px] text-emerald-400 font-medium';
+        }
+      } catch (err) {
+        console.log('Error syncing history from cloud:', err);
+        if (statusEl) {
+          statusEl.textContent = '⚠️ Modo local (reintentará al conectar)';
+          statusEl.className = 'text-[11px] text-amber-400 font-medium';
+        }
+      }
     }
 
     function markWornToday() {
@@ -1187,8 +1332,13 @@
         comp: currentSelection.comp,
         repeat: currentSelection.repeat,
         occasion: occasionName,
-        weather: weatherTemp
+        weather: weatherTemp,
+        ts: Date.now()
       };
+
+      const deletedMap = getDeletedDatesMap();
+      delete deletedMap[todayRaw];
+      saveDeletedDatesMap(deletedMap);
 
       if (existingIdx >= 0) {
         log[existingIdx] = entry;
@@ -1196,25 +1346,25 @@
         log.unshift(entry);
       }
 
+      sortHistoryDescending(log);
       saveDailyHistory(log);
       updateWornButtonState();
       loadHistory();
+      pushHistoryToCloud();
     }
 
     function toggleManualAddSection() {
       const sec = document.getElementById('manualAddSection');
       sec.classList.toggle('hidden');
       if (!sec.classList.contains('hidden')) {
-        // Set default date to today
         document.getElementById('manualDateInput').valueAsDate = new Date();
-        // Populate perfume select
         const sel = document.getElementById('manualPerfumeInput');
         sel.innerHTML = '';
         PERFUMES.forEach(p => {
           const disp = getFormattedDisplay(p);
           const opt = document.createElement('option');
           opt.value = p.id;
-          opt.textContent = `${disp.mainTitle} (${p.cat} - ${p.name})`;
+          opt.textContent = `${disp.mainTitle} (${disp.badgeCat || p.cat} - ${p.name})`;
           sel.appendChild(opt);
         });
       }
@@ -1248,8 +1398,13 @@
         comp: p.comp,
         repeat: p.repeat,
         occasion: occVal,
-        weather: document.getElementById('weatherTemp').textContent || '21°C'
+        weather: document.getElementById('weatherTemp').textContent || '21°C',
+        ts: Date.now()
       };
+
+      const deletedMap = getDeletedDatesMap();
+      delete deletedMap[rawDate];
+      saveDeletedDatesMap(deletedMap);
 
       if (existingIdx >= 0) {
         log[existingIdx] = entry;
@@ -1257,18 +1412,13 @@
         log.push(entry);
       }
 
-      // Sort descending by date
-      log.sort((a, b) => {
-        const pa = a.rawDate.split('/').map(n => n.padStart(2, '0')).reverse().join('');
-        const pb = b.rawDate.split('/').map(n => n.padStart(2, '0')).reverse().join('');
-        return pb.localeCompare(pa);
-      });
-
+      sortHistoryDescending(log);
       saveDailyHistory(log);
       document.getElementById('manualAddSection').classList.add('hidden');
       renderHistoryModalList();
       loadHistory();
       updateWornButtonState();
+      pushHistoryToCloud();
     }
 
     function loadHistory() {
@@ -1288,14 +1438,14 @@
       const histText = document.getElementById('historyText');
 
       if (todayEntry) {
-        const dispName = todayEntry.dupe || todayEntry.name;
+        const disp = getFormattedDisplay(todayEntry);
         histContainer.classList.remove('hidden');
-        histText.innerHTML = `Llevas puesta hoy: <b class="text-white">${dispName}</b> (${todayEntry.cat}) para <i>${todayEntry.occasion}</i>.`;
+        histText.innerHTML = `Llevas puesta hoy: <b class="text-white">${disp.mainTitle}</b> (${disp.badgeCat}) para <i>${todayEntry.occasion}</i>.`;
       } else if (log.length > 0) {
         const last = log[0];
-        const dispName = last.dupe || last.name;
+        const disp = getFormattedDisplay(last);
         histContainer.classList.remove('hidden');
-        histText.innerHTML = `Último registro (${last.rawDate}): <b class="text-white">${dispName}</b> (${last.cat}).`;
+        histText.innerHTML = `Último registro (${last.rawDate}): <b class="text-white">${disp.mainTitle}</b> (${disp.badgeCat}).`;
       } else {
         histContainer.classList.add('hidden');
       }
@@ -1304,6 +1454,7 @@
     function openHistoryModal() {
       document.getElementById('historyModal').classList.remove('hidden');
       renderHistoryModalList();
+      syncHistoryWithCloud(false);
     }
 
     function closeHistoryModal() {
@@ -1331,7 +1482,8 @@
 
       const counts = {};
       log.forEach(item => {
-        const k = item.dupe ? `${item.dupe} (${item.cat})` : `${item.name}`;
+        const disp = getFormattedDisplay(item);
+        const k = `${disp.mainTitle}`;
         counts[k] = (counts[k] || 0) + 1;
       });
       let topName = '-';
@@ -1383,19 +1535,37 @@
 
     function removeHistoryItem(index) {
       let log = getDailyHistory();
+      const removed = log[index];
+      if (removed && removed.rawDate) {
+        const deletedMap = getDeletedDatesMap();
+        deletedMap[removed.rawDate] = Date.now();
+        saveDeletedDatesMap(deletedMap);
+      }
       log.splice(index, 1);
       saveDailyHistory(log);
       renderHistoryModalList();
       loadHistory();
       updateWornButtonState();
+      pushHistoryToCloud();
     }
 
     function clearHistoryLog() {
-      if (confirm('¿Estás seguro de que deseas borrar todo el historial de colonias?')) {
+      if (confirm('¿Estás seguro de que deseas borrar todo el historial de colonias (en Móvil y PC)?')) {
+        const log = getDailyHistory();
+        const deletedMap = getDeletedDatesMap();
+        const nowTs = Date.now();
+        log.forEach(item => {
+          if (item && item.rawDate) deletedMap[item.rawDate] = nowTs;
+        });
+        INITIAL_SEED_HISTORY.forEach(item => {
+          deletedMap[item.rawDate] = nowTs;
+        });
+        saveDeletedDatesMap(deletedMap);
         saveDailyHistory([]);
         renderHistoryModalList();
         loadHistory();
         updateWornButtonState();
+        pushHistoryToCloud();
       }
     }
 
