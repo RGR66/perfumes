@@ -59,25 +59,40 @@
   <!-- Main Content Scrollable Area -->
   <main class="flex-1 p-4 pb-24 space-y-4 overflow-y-auto hide-scrollbar">
 
-    <!-- Smart Context Banner with Live Weather for Alenda Golf (Monforte del Cid) -->
-    <div id="smartContextBanner" class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-700/70 rounded-2xl p-3.5 flex items-center justify-between text-xs shadow-md">
-      <div class="flex items-center gap-2.5">
-        <span class="text-2xl" id="contextIcon">☀️</span>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold text-slate-200" id="contextTitle">Cargando clima...</span>
-            <span id="weatherTemp" class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30">--°C</span>
-          </div>
-          <div class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5" id="contextSubtitle">
-            <span>📍 Alenda Golf (Monforte)</span>
-            <span>•</span>
-            <span id="weatherConditionText" class="text-slate-300">Consultando estación...</span>
+    <!-- Smart Context Banner with Live Weather + Day/Afternoon Forecast for Alenda Golf -->
+    <div id="smartContextBanner" class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-700/70 rounded-2xl p-3.5 text-xs shadow-md space-y-2">
+      <!-- Line 1: Right Now at opening time -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl" id="contextIcon">☀️</span>
+          <div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-bold text-slate-200" id="contextTitle">Cargando clima...</span>
+              <span id="weatherTemp" class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30">--°C</span>
+              <span class="text-slate-500">•</span>
+              <span id="weatherConditionText" class="text-slate-200 font-semibold">Consultando...</span>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5">
+              <span>📍 Alenda Golf (Monforte del Cid) — Ahora mismo</span>
+            </div>
           </div>
         </div>
+        <button onclick="fetchLiveWeather()" title="Actualizar clima y previsión en directo" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-cyan-400 transition active:scale-90 shrink-0">
+          🌤️
+        </button>
       </div>
-      <button onclick="fetchLiveWeather()" title="Actualizar clima en directo" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-cyan-400 transition active:scale-90 shrink-0">
-        🌤️
-      </button>
+
+      <!-- Line 2: Day & Afternoon Average (09:00h - 20:00h Street Hours) -->
+      <div class="pt-2 border-t border-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
+        <div class="flex items-center gap-1.5 text-slate-300 font-medium">
+          <span>🚶</span>
+          <span class="text-slate-400">Día y Tarde (09h-20h):</span>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap justify-end">
+          <span id="dayAvgTempBadge" class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 font-bold text-[11px] border border-cyan-500/30">Media --°C</span>
+          <span id="dayForecastCondition" class="text-slate-200 font-semibold flex items-center gap-1">--</span>
+        </div>
+      </div>
     </div>
 
     <!-- Filter Selectors -->
@@ -198,8 +213,10 @@
     <!-- Top 3 Alternative Candidates List -->
     <div class="space-y-2">
       <div class="text-xs font-bold text-slate-300 flex items-center justify-between">
-        <span>Otras alternativas compatibles</span>
-        <span class="text-[11px] text-cyan-400 font-normal">Toca para ver</span>
+        <span>Otras alternativas para este plan y clima</span>
+        <button onclick="renderAlternatives(currentSelection)" class="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 active:scale-95 transition">
+          <span>🔄</span> <span>Otras 3 alternativas</span>
+        </button>
       </div>
       <div id="alternativeList" class="space-y-1.5">
       </div>
@@ -340,7 +357,7 @@
 
   <script>
     // Embedded Baseline Dataset
-    let PERFUMES = [{"id": 3, "brand": "Chanel", "name": "Bleu", "dupe": "Genave 149", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "Apenas dura 3 horas. Buena salida. Club de Nuit Blue Iconic dura mucho mas", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 5, "brand": "Hermes", "name": "Terre d' Hermes", "dupe": "Barrax 158", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 7, "brand": "Dior", "name": "Sauvage", "dupe": "Quiros 181", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 9, "brand": "Dior", "name": "Homme EDP", "dupe": "Layos 117", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "Este si que dura bastante en piel y proyecta. No importa repetir", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 15, "brand": "Creed", "name": "Green Irish Tweed", "dupe": "No tengo el nombre de Aromas", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 21, "brand": "Davidoff", "name": "Cool Water (Aromas artesanales nº 1135)", "dupe": "1135", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 24, "brand": "Hugo Boss", "name": "Boss Bottled", "dupe": "Carvan nº 13", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 25, "brand": "Loewe", "name": "Esencia de Loewe", "dupe": "Carvan nº 14", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 26, "brand": "Ralph Lauren", "name": "Polo Blue", "dupe": "Carvan nº 18", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 27, "brand": "Ralph Lauren", "name": "Polo Blue", "dupe": "Carvan nº 18", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 28, "brand": "Abercrombie & Fitch", "name": "Fierce", "dupe": "Carvan nº 57", "cat": "CARAVAN", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 29, "brand": "Abercrombie & Fitch", "name": "Fierce", "dupe": "Carvan nº 57", "cat": "CARAVAN", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 30, "brand": "Donna Karan", "name": "Donna Karan New York DNKNY", "dupe": "Carvan nº 35", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 31, "brand": "Donna Karan", "name": "Donna Karan New York DNKNY", "dupe": "Carvan nº 35", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 32, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Carvan nº 15", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 33, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Carvan nº 66", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 34, "brand": "Paco Rabanne", "name": "One Million", "dupe": "Carvan nº 61", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 39, "brand": "Prada", "name": "L'Homme", "dupe": "Nº 5221", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Huele muy muy similar al original", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 41, "brand": "Yves Saint Laurent", "name": "M7", "dupe": "Nº 5206", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 42, "brand": "Dolce & Gabbana", "name": "D&G Pour Homme", "dupe": "Nº 1", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Me gusta. Es para otoño invierno. A diferencia de los otros aguanta en piel mas de 8 horas.", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 43, "brand": "Bvlgari", "name": "Man in Black", "dupe": "Nº 5300", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Me gusta. Es para otoño invierno. A diferencia de los otros aguanta en piel mas de 8 horas.", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 44, "brand": "Dior", "name": "Dior Homme Parfum EDP 2025", "dupe": "Nº 5303", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["cena_elegante", "formal", "diario", "frio", "noche_fiesta", "oficina"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 48, "brand": "Dior", "name": "Dior Homme Intense EDP", "dupe": "Bold Horizons Quiet Storm EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 49, "brand": "Yves Saint Laurent", "name": "Y EDP", "dupe": "Bold Horizons Electric Beat EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 50, "brand": "Tom Ford / Creed", "name": "Noir Extreme / Aventus", "dupe": "Bold Horizons Smoky Noir EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["cena_elegante", "formal", "diario", "frio", "noche_fiesta", "oficina"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 51, "brand": "Bvlgari", "name": "Man in Black", "dupe": "Bold Horizons N/43 EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 52, "brand": "Yves Saint Laurent", "name": "L'Homme", "dupe": "Bold Horizons Silent Shadow", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 55, "brand": "Creed", "name": "Aventus", "dupe": "Vibrant Leather", "cat": "ZARA", "comp": true, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 56, "brand": "Emporio Armani", "name": "Stronger With You Intensely", "dupe": "Florencia", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 57, "brand": "Louis Vuitton", "name": "Imagination", "dupe": "Sunrise at the Red Sand Dunes", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 58, "brand": "Kilian", "name": "Angels'  Share", "dupe": "Sand Desert at Sunset", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 59, "brand": "Phylosykos", "name": "Dyptikos", "dupe": "Terra Profonda Black Fig & Basil", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["terraza", "cena_elegante", "paseo", "diario", "frio", "deporte", "noche_fiesta", "oficina"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 60, "brand": "Armani", "name": "Acqua di Gio", "dupe": "Lisboa", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 61, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Seoul", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 62, "brand": "Le Labo", "name": "Santal 33", "dupe": "Energetically New York", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 63, "brand": "Louis Vuitton", "name": "Imagination", "dupe": "Sunrise at the Red Sand Dunes Intense", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 64, "brand": "Dior", "name": "Sauvage", "dupe": "Green Savage Winter", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 65, "brand": "Paco Rabanne", "name": "Invictus Victory", "dupe": "Blue Spirit Winter", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "terraza", "cena_elegante", "frio", "noche_fiesta", "cena_casual"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 66, "brand": "Tom Ford", "name": "Neroli Portofino", "dupe": "Amalfi Sunray", "cat": "ZARA", "comp": false, "repeat": false, "notes": "El perfil: Recrea la costa italiana con mandarina jugosa, bergamota y flor de naranjo con almizcle limpio.\n\nEn qué se parecen: Clava esa sensación de colonia italiana clásica de altísimo nivel, toallas blancas al sol y brisa mediterránea marina sin notas sintéticas punzantes.", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["terraza", "paseo", "diario", "deporte", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 67, "brand": "Jo Malone London", "name": "Orange Blossom", "dupe": "Fleur d'Oranger", "cat": "ZARA", "comp": false, "repeat": false, "notes": "El perfil: Flor de azahar pura, néroli radiante e ylang-ylang sobre almizcle. Huele a pétalos de naranjo mojados por el rocío y jabón fino de barbería de lujo.", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": true, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 68, "brand": "Byredo", "name": "Gypsy Water", "dupe": "Waterlily Tea Dress", "cat": "ZARA", "comp": false, "repeat": false, "notes": "Menta fresca natural, bergamota verde y nenúfar sobre base limpia de ambroxan.\n\nEn qué se parecen: Comparte la atmósfera etérea, verde y relajante de Gypsy Water, sustituyendo las notas amaderadas de pino e incienso por un carácter más acuático y cristalino de mañana de primavera.", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 69, "brand": "Mugler Cologne", "name": "Run Free", "dupe": "Elegantly Tokyo", "cat": "ZARA", "comp": false, "repeat": false, "notes": "Flores blancas, jazmín fresco muy puro y la nota contemporánea de akigalawood (madera especiada/terrosa limpia).", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["terraza", "formal", "paseo", "diario", "deporte", "oficina", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 77, "brand": "Emporio Armani", "name": "Stronger With You", "dupe": "El Him", "cat": "MERCADONA", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 79, "brand": "Mugler / Creed", "name": "Mugler Cologne / Original Vetiver", "dupe": "My Soul Virent", "cat": "MERCADONA", "comp": false, "repeat": false, "notes": "Inspiración Mugler Cologne (Come Together) y Creed Original Vetiver (cítrico limpio, neroli jabonoso, petit grain y vetiver verde). Colección My Soul.", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 82, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Lacura White", "cat": "ALDI", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 83, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Lacura White", "cat": "ALDI", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 86, "brand": "Hugo Boss", "name": "Boss Bottled", "dupe": "Boost", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 87, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Victory", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "terraza", "cena_elegante", "frio", "noche_fiesta", "cena_casual"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 88, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Victory", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "terraza", "cena_elegante", "frio", "noche_fiesta", "cena_casual"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 89, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Acqua Fresh", "cat": "LIDL", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 90, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Acqua Fresh", "cat": "LIDL", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 93, "brand": "Creed", "name": "Aventus", "dupe": "Reebok - Blue Iconic", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["tardeo", "amigos", "terraza", "formal", "diario", "cena_casual", "oficina"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 94, "brand": "Jean Paul Gaultier", "name": "Ultra Male", "dupe": "Nike - Ultra Blue", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 95, "brand": "Yves Saint Laurent", "name": "Kouros", "dupe": "Milton Lloyd - The Man Silver", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 96, "brand": "Creed / Montblanc / Channel / Dior", "name": "Aventus / Explorer / Bleu / Sauvage", "dupe": "Don Algodón - Eau de Parfum Hombre", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["tardeo", "amigos", "terraza", "formal", "diario", "cena_casual", "oficina"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 97, "brand": "Channel", "name": "Bleu", "dupe": "Nike Gold Edition Man EDT", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 102, "brand": "Nautica", "name": "Voyage", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 103, "brand": "Nautica", "name": "Voyage", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 104, "brand": "Jaguar", "name": "Classic Black", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 105, "brand": "Prada", "name": "Prada L'Homme", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 106, "brand": "Davidoff", "name": "Cool Water", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 107, "brand": "Adolfo Dominguez", "name": "Agua Fresca", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["tarde", "manana"], "occasions": ["diario", "paseo", "terraza", "deporte"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 108, "brand": "Adolfo Dominguez", "name": "Vetiver Terra", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["cena_elegante", "formal", "diario", "frio", "noche_fiesta", "oficina", "visita_padre"], "father": true, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 109, "brand": "Adolfo Dominguez", "name": "Citrus Cedro", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["terraza", "paseo", "diario", "deporte", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 110, "brand": "Calvin Klein", "name": "Eternity", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": true, "notes": "", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana"], "occasions": ["diario", "oficina", "formal"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 114, "brand": "Parfums de Marly", "name": "Kalan", "dupe": "Afnan - Zimaya Red Carpet Paragon", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Kalan de Parfums de Marly es una fragancia de la familia olfativa Oriental Especiada para Hombres y Mujeres. Kalan se lanzó en 2019. La Nariz detrás de esta fragrancia es Celine Ripert. Las Notas de Salida son especias, naranja sanguina y pimienta negra; las Notas de Corazón son lavanda y flor de azahar del naranjo; las Notas de Fondo son notas amaderadas, musgo, sándalo blanco, haba tonka y ámbar.", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 115, "brand": "Orto Parisi", "name": "Megamare", "dupe": "Lattfafa - Atlas", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Atlas es una inspiración del famoso y costoso perfume Megamare de Orto Parisi. El creador del video señala que es un logro muy superior al intento anterior de la marca (Megara) y destaca que en el secado son casi indistinguibles, con la ventaja de que Atlas es seis veces más barato.Aroma a mar realista y salvaje: Sus notas principales incluyen acordes acuáticos y de sal, jazmín, calone, cedro del Atlas, almizcle y una enorme cantidad de ambroxan. No huele a una playa tropical, sino a un mar revuelto, acantilados, algas, y al puerto (el autor lo compara con el mar Cantábrico), brindando una sensación extremadamente limpia, fresca y envolvente.", "seasons": ["verano", "primavera"], "times": ["tarde", "noche"], "occasions": ["aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 116, "brand": "Chanel", "name": "Bleu de Chanel EDP", "dupe": "Armaf - Club de Nuit Blue Iconic", "cat": "PERFUMES ARABES", "comp": false, "repeat": true, "notes": "Huele muy bien. Me gusta", "seasons": ["verano", "primavera", "otono"], "times": ["tarde", "noche"], "occasions": ["amigos", "tardeo", "cena_casual", "terraza"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 119, "brand": "Rosendo Mateu", "name": "Nº 5 de Rosendo Mateu.", "dupe": "Maison Alhambra - Domino Essence", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Me duro todo el dia desde primera hora hasta la noche", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 120, "brand": "Maison Francis Kurkdjian", "name": "Baccarat Rouge 540", "dupe": "Armaf - Club de Nuit Untold", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 121, "brand": "Creed", "name": "Aventus", "dupe": "Armaf - Club de Nuit Intense Man Pure Parfum", "cat": "PERFUMES ARABES", "comp": false, "repeat": true, "notes": "No dura mucho en mi piel aunque nos gusta. 4 horas aprox sin reaplicar", "seasons": ["invierno", "verano", "primavera", "otono"], "times": ["tarde", "manana", "noche"], "occasions": ["tardeo", "amigos", "terraza", "formal", "diario", "cena_casual", "oficina"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 123, "brand": "Orto Parisi", "name": "Terroni", "dupe": "Maison Alhambra - Terra", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 124, "brand": "Xerjoff", "name": "XJ 1861 Naxos", "dupe": "Rayhaan - Italia", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 126, "brand": "Jean Paul Gaultier", "name": "Ultra Male", "dupe": "Al Wattaniya - Attar AL Wesal", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "99% parecido con Ultra Male", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 127, "brand": "Kilian", "name": "Angels'  Share", "dupe": "Lattafa - AKhaltaat Al Arabia", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Inspirado pero no es un clon", "seasons": ["invierno", "otono"], "times": ["tarde", "noche"], "occasions": ["noche_fiesta", "frio", "cena_elegante"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}];
+    let PERFUMES = [{"id": 3, "brand": "Chanel", "name": "Bleu", "dupe": "Genave 149", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "Apenas dura 3 horas. Buena salida. Club de Nuit Blue Iconic dura mucho mas", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 5, "brand": "Hermes", "name": "Terre d' Hermes", "dupe": "Barrax 158", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde", "noche"], "occasions": ["oficina", "diario", "visita_padre", "tardeo"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 7, "brand": "Dior", "name": "Sauvage", "dupe": "Quiros 181", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 9, "brand": "Dior", "name": "Homme EDP", "dupe": "Layos 117", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "Este si que dura bastante en piel y proyecta. No importa repetir", "seasons": ["primavera", "verano", "otono", "invierno"], "times": ["tarde", "noche"], "occasions": ["tardeo", "noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 15, "brand": "Creed", "name": "Green Irish Tweed", "dupe": "No tengo el nombre de Aromas", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 21, "brand": "Davidoff", "name": "Cool Water (Aromas artesanales nº 1135)", "dupe": "1135", "cat": "AROMAS ARTESANALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 24, "brand": "Hugo Boss", "name": "Boss Bottled", "dupe": "Carvan nº 13", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 25, "brand": "Loewe", "name": "Esencia de Loewe", "dupe": "Carvan nº 14", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 26, "brand": "Ralph Lauren", "name": "Polo Blue", "dupe": "Carvan nº 18", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 27, "brand": "Ralph Lauren", "name": "Polo Blue", "dupe": "Carvan nº 18", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 28, "brand": "Abercrombie & Fitch", "name": "Fierce", "dupe": "Carvan nº 57", "cat": "CARAVAN", "comp": true, "repeat": true, "notes": "", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 29, "brand": "Abercrombie & Fitch", "name": "Fierce", "dupe": "Carvan nº 57", "cat": "CARAVAN", "comp": true, "repeat": true, "notes": "", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 30, "brand": "Donna Karan", "name": "Donna Karan New York DNKNY", "dupe": "Carvan nº 35", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 31, "brand": "Donna Karan", "name": "Donna Karan New York DNKNY", "dupe": "Carvan nº 35", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 32, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Carvan nº 15", "cat": "CARAVAN", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 33, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Carvan nº 66", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 34, "brand": "Paco Rabanne", "name": "One Million", "dupe": "Carvan nº 61", "cat": "CARAVAN", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 39, "brand": "Prada", "name": "L'Homme", "dupe": "Nº 5221", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Huele muy muy similar al original", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 41, "brand": "Yves Saint Laurent", "name": "M7", "dupe": "Nº 5206", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 42, "brand": "Dolce & Gabbana", "name": "D&G Pour Homme", "dupe": "Nº 1", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Me gusta. Es para otoño invierno. A diferencia de los otros aguanta en piel mas de 8 horas.", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 43, "brand": "Bvlgari", "name": "Man in Black", "dupe": "Nº 5300", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "Me gusta. Es para otoño invierno. A diferencia de los otros aguanta en piel mas de 8 horas.", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 44, "brand": "Dior", "name": "Dior Homme Parfum EDP 2025", "dupe": "Nº 5303", "cat": "PERFUMARE", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde", "noche"], "occasions": ["oficina", "diario", "noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 48, "brand": "Dior", "name": "Dior Homme Intense EDP", "dupe": "Bold Horizons Quiet Storm EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 49, "brand": "Yves Saint Laurent", "name": "Y EDP", "dupe": "Bold Horizons Electric Beat EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche"], "occasions": ["tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 50, "brand": "Tom Ford / Creed", "name": "Noir Extreme / Aventus", "dupe": "Bold Horizons Smoky Noir EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde", "noche"], "occasions": ["oficina", "diario", "noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 51, "brand": "Bvlgari", "name": "Man in Black", "dupe": "Bold Horizons N/43 EDP", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 52, "brand": "Yves Saint Laurent", "name": "L'Homme", "dupe": "Bold Horizons Silent Shadow", "cat": "LEFTIES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 55, "brand": "Creed", "name": "Aventus", "dupe": "Vibrant Leather", "cat": "ZARA", "comp": true, "repeat": true, "notes": "", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 56, "brand": "Emporio Armani", "name": "Stronger With You Intensely", "dupe": "Florencia", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 57, "brand": "Louis Vuitton", "name": "Imagination", "dupe": "Sunrise at the Red Sand Dunes", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 58, "brand": "Kilian", "name": "Angels'  Share", "dupe": "Sand Desert at Sunset", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 59, "brand": "Phylosykos", "name": "Dyptikos", "dupe": "Terra Profonda Black Fig & Basil", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono", "invierno"], "times": ["manana", "tarde", "noche"], "occasions": ["diario", "deporte", "aire_libre_mar", "oficina", "noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 60, "brand": "Armani", "name": "Acqua di Gio", "dupe": "Lisboa", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 61, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Seoul", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 62, "brand": "Le Labo", "name": "Santal 33", "dupe": "Energetically New York", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 63, "brand": "Louis Vuitton", "name": "Imagination", "dupe": "Sunrise at the Red Sand Dunes Intense", "cat": "ZARA", "comp": false, "repeat": true, "notes": "", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 64, "brand": "Dior", "name": "Sauvage", "dupe": "Green Savage Winter", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono", "invierno"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 65, "brand": "Paco Rabanne", "name": "Invictus Victory", "dupe": "Blue Spirit Winter", "cat": "ZARA", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono", "invierno"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo", "noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 66, "brand": "Tom Ford", "name": "Neroli Portofino", "dupe": "Amalfi Sunray", "cat": "ZARA", "comp": false, "repeat": false, "notes": "El perfil: Recrea la costa italiana con mandarina jugosa, bergamota y flor de naranjo con almizcle limpio.\n\nEn qué se parecen: Clava esa sensación de colonia italiana clásica de altísimo nivel, toallas blancas al sol y brisa mediterránea marina sin notas sintéticas punzantes.", "seasons": ["verano", "primavera", "otono"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 67, "brand": "Jo Malone London", "name": "Orange Blossom", "dupe": "Fleur d'Oranger", "cat": "ZARA", "comp": false, "repeat": false, "notes": "El perfil: Flor de azahar pura, néroli radiante e ylang-ylang sobre almizcle. Huele a pétalos de naranjo mojados por el rocío y jabón fino de barbería de lujo.", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": true, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 68, "brand": "Byredo", "name": "Gypsy Water", "dupe": "Waterlily Tea Dress", "cat": "ZARA", "comp": false, "repeat": false, "notes": "Menta fresca natural, bergamota verde y nenúfar sobre base limpia de ambroxan.\n\nEn qué se parecen: Comparte la atmósfera etérea, verde y relajante de Gypsy Water, sustituyendo las notas amaderadas de pino e incienso por un carácter más acuático y cristalino de mañana de primavera.", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 69, "brand": "Mugler Cologne", "name": "Run Free", "dupe": "Elegantly Tokyo", "cat": "ZARA", "comp": false, "repeat": false, "notes": "Flores blancas, jazmín fresco muy puro y la nota contemporánea de akigalawood (madera especiada/terrosa limpia).", "seasons": ["verano", "primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar", "oficina", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 77, "brand": "Emporio Armani", "name": "Stronger With You", "dupe": "El Him", "cat": "MERCADONA", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 79, "brand": "Mugler / Creed", "name": "Mugler Cologne / Original Vetiver", "dupe": "My Soul Virent", "cat": "MERCADONA", "comp": false, "repeat": false, "notes": "Inspiración Mugler Cologne (Come Together) y Creed Original Vetiver (cítrico limpio, neroli jabonoso, petit grain y vetiver verde). Colección My Soul.", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 82, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Lacura White", "cat": "ALDI", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 83, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Lacura White", "cat": "ALDI", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 86, "brand": "Hugo Boss", "name": "Boss Bottled", "dupe": "Boost", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 87, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Victory", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono", "invierno"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo", "noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 88, "brand": "Paco Rabanne", "name": "Invictus", "dupe": "Victory", "cat": "LIDL", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono", "invierno"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo", "noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 89, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Acqua Fresh", "cat": "LIDL", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 90, "brand": "Giorgio Armani", "name": "Acqua di Gio", "dupe": "Acqua Fresh", "cat": "LIDL", "comp": false, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 93, "brand": "Creed", "name": "Aventus", "dupe": "Reebok - Blue Iconic", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde", "noche"], "occasions": ["oficina", "diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 94, "brand": "Jean Paul Gaultier", "name": "Ultra Male", "dupe": "Nike - Ultra Blue", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 95, "brand": "Yves Saint Laurent", "name": "Kouros", "dupe": "Milton Lloyd - The Man Silver", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 96, "brand": "Creed / Montblanc / Channel / Dior", "name": "Aventus / Explorer / Bleu / Sauvage", "dupe": "Don Algodón - Eau de Parfum Hombre", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono", "invierno"], "times": ["manana", "tarde", "noche"], "occasions": ["diario", "deporte", "aire_libre_mar", "oficina", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 97, "brand": "Channel", "name": "Bleu", "dupe": "Nike Gold Edition Man EDT", "cat": "DUPES VARIOS", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 102, "brand": "Nautica", "name": "Voyage", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 103, "brand": "Nautica", "name": "Voyage", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 104, "brand": "Jaguar", "name": "Classic Black", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 105, "brand": "Prada", "name": "Prada L'Homme", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario", "visita_padre"], "father": true, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 106, "brand": "Davidoff", "name": "Cool Water", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 107, "brand": "Adolfo Dominguez", "name": "Agua Fresca", "dupe": "", "cat": "ORIGINALES", "comp": true, "repeat": true, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 108, "brand": "Adolfo Dominguez", "name": "Vetiver Terra", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["primavera", "otono", "invierno"], "times": ["manana", "tarde", "noche"], "occasions": ["oficina", "diario", "visita_padre", "noche_fiesta"], "father": true, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 109, "brand": "Adolfo Dominguez", "name": "Citrus Cedro", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": false, "notes": "", "seasons": ["verano", "primavera", "otono"], "times": ["manana", "tarde"], "occasions": ["diario", "deporte", "aire_libre_mar", "oficina"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 110, "brand": "Calvin Klein", "name": "Eternity", "dupe": "", "cat": "ORIGINALES", "comp": false, "repeat": true, "notes": "", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde"], "occasions": ["oficina", "diario"], "father": false, "vibe": "💼 Oficina, Pulcritud & Firma Elegante", "block": 2}, {"id": 114, "brand": "Parfums de Marly", "name": "Kalan", "dupe": "Afnan - Zimaya Red Carpet Paragon", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Kalan de Parfums de Marly es una fragancia de la familia olfativa Oriental Especiada para Hombres y Mujeres. Kalan se lanzó en 2019. La Nariz detrás de esta fragrancia es Celine Ripert. Las Notas de Salida son especias, naranja sanguina y pimienta negra; las Notas de Corazón son lavanda y flor de azahar del naranjo; las Notas de Fondo son notas amaderadas, musgo, sándalo blanco, haba tonka y ámbar.", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 115, "brand": "Orto Parisi", "name": "Megamare", "dupe": "Lattfafa - Atlas", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Atlas es una inspiración del famoso y costoso perfume Megamare de Orto Parisi. El creador del video señala que es un logro muy superior al intento anterior de la marca (Megara) y destaca que en el secado son casi indistinguibles, con la ventaja de que Atlas es seis veces más barato.Aroma a mar realista y salvaje: Sus notas principales incluyen acordes acuáticos y de sal, jazmín, calone, cedro del Atlas, almizcle y una enorme cantidad de ambroxan. No huele a una playa tropical, sino a un mar revuelto, acantilados, algas, y al puerto (el autor lo compara con el mar Cantábrico), brindando una sensación extremadamente limpia, fresca y envolvente.", "seasons": ["verano", "primavera"], "times": ["noche", "tarde"], "occasions": ["aire_libre_mar", "tardeo"], "father": false, "vibe": "🌊 Fresco Mediterráneo, Limpio & Diario", "block": 1}, {"id": 116, "brand": "Chanel", "name": "Bleu de Chanel EDP", "dupe": "Armaf - Club de Nuit Blue Iconic", "cat": "PERFUMES ARABES", "comp": false, "repeat": true, "notes": "Huele muy bien. Me gusta", "seasons": ["primavera", "verano", "otono"], "times": ["tarde", "noche", "manana"], "occasions": ["diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 119, "brand": "Rosendo Mateu", "name": "Nº 5 de Rosendo Mateu.", "dupe": "Maison Alhambra - Domino Essence", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Me duro todo el dia desde primera hora hasta la noche", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 120, "brand": "Maison Francis Kurkdjian", "name": "Baccarat Rouge 540", "dupe": "Armaf - Club de Nuit Untold", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 121, "brand": "Creed", "name": "Aventus", "dupe": "Armaf - Club de Nuit Intense Man Pure Parfum", "cat": "PERFUMES ARABES", "comp": false, "repeat": true, "notes": "No dura mucho en mi piel aunque nos gusta. 4 horas aprox sin reaplicar", "seasons": ["primavera", "otono", "invierno", "verano"], "times": ["manana", "tarde", "noche"], "occasions": ["oficina", "diario", "tardeo"], "father": false, "vibe": "🌆 Tardeo, Magnético & Citas Casuales", "block": 3}, {"id": 123, "brand": "Orto Parisi", "name": "Terroni", "dupe": "Maison Alhambra - Terra", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 124, "brand": "Xerjoff", "name": "XJ 1861 Naxos", "dupe": "Rayhaan - Italia", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 126, "brand": "Jean Paul Gaultier", "name": "Ultra Male", "dupe": "Al Wattaniya - Attar AL Wesal", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "99% parecido con Ultra Male", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}, {"id": 127, "brand": "Kilian", "name": "Angels'  Share", "dupe": "Lattafa - AKhaltaat Al Arabia", "cat": "PERFUMES ARABES", "comp": false, "repeat": false, "notes": "Inspirado pero no es un clon", "seasons": ["otono", "invierno"], "times": ["noche", "tarde"], "occasions": ["noche_fiesta"], "father": false, "vibe": "🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)", "block": 4}];
 
     const SHEET_ID = '1GuN26NIvz_LV_j0k7B_eoixOGbXSjVtWt6_s-DI-nhs';
     let currentSelection = null;
@@ -398,8 +415,9 @@
       localStorage.removeItem('perfumes_remote_cache');
       localStorage.removeItem('perfumes_remote_cache_v2');
       localStorage.removeItem('perfumes_remote_cache_v3');
+      localStorage.removeItem('perfumes_remote_cache_v4');
 
-      const cached = localStorage.getItem('perfumes_remote_cache_v4');
+      const cached = localStorage.getItem('perfumes_remote_cache_v5');
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
@@ -747,7 +765,7 @@
 
         if (newPerfumes.length >= 60) {
           PERFUMES = newPerfumes;
-          localStorage.setItem('perfumes_remote_cache_v4', JSON.stringify(newPerfumes));
+          localStorage.setItem('perfumes_remote_cache_v5', JSON.stringify(newPerfumes));
           updateTotalsUI();
           badge.className = "w-2 h-2 rounded-full bg-emerald-400";
           if (manual) {
@@ -781,40 +799,45 @@
       let occasions = [];
       let isFather = false;
 
-      const fatherKeys = ["esencia", "caravan 14", "prada", "5221", "vetiver terra", "quiet storm", "silent shadow", "virent", "mugler cologne", "fleur d'oranger", "elegantly tokyo"];
+      const fatherKeys = ["esencia", "caravan 14", "carvan nº 14", "prada", "5221", "vetiver terra", "quiet storm", "silent shadow", "virent", "mugler cologne", "fleur d'oranger", "elegantly tokyo", "terre", "barrax", "green irish"];
       if (fatherKeys.some(k => full.includes(k))) isFather = true;
 
-      if (["amalfi sunray", "neroli portofino", "fleur d'oranger", "orange blossom", "waterlily tea dress", "gypsy water", "elegantly tokyo", "run free", "cool water", "voyage", "acqua di gio", "citrus cedro", "acqua fresh", "agua fresca", "lacura", "lisboa", "dkny", "caravan 35", "don algodon", "bambu", "diptyque", "terra profonda", "philosykos", "caravan 15", "caravan 18", "polo blue", "1135"].some(k => full.includes(k))) {
+      if (["amalfi sunray", "neroli portofino", "fleur d'oranger", "orange blossom", "waterlily tea dress", "gypsy water", "elegantly tokyo", "run free", "cool water", "voyage", "acqua di gio", "citrus cedro", "acqua fresh", "agua fresca", "lacura", "lisboa", "dkny", "dnkny", "caravan 35", "carvan nº 35", "don algodon", "don algodón", "bambu", "diptyque", "dyptikos", "terra profonda", "philosykos", "phylosykos", "caravan 15", "carvan nº 15", "caravan 18", "carvan nº 18", "polo blue", "1135"].some(k => full.includes(k))) {
         seasons.push('verano', 'primavera');
         times.push('manana', 'tarde');
-        occasions.push('diario', 'deporte', 'paseo', 'terraza');
-        if (['terra profonda', 'citrus cedro', 'elegantly tokyo', 'amalfi sunray'].some(k => full.includes(k))) {
+        occasions.push('diario', 'deporte', 'aire_libre_mar');
+        if (['terra profonda', 'citrus cedro', 'elegantly tokyo', 'amalfi sunray', 'agua fresca', 'don algodon', 'don algodón', 'lisboa'].some(k => full.includes(k))) {
           occasions.push('oficina');
           seasons.push('otono');
         }
       }
 
-      if (['prada', 'vetiver terra', 'esencia', 'quiet storm', 'silent shadow', 'eternity', 'virent', 'mugler', 'santal', 'energetically', 'sunrise', 'red sand dunes', 'vibrant leather', 'aventus', 'd&g pour homme', 'dolce', 'boss bottled', 'boost', 'caravan 13', 'the man silver', 'classic black', '5221', '5201', '5303', 'elegantly tokyo'].some(k => full.includes(k))) {
+      if (['prada', 'vetiver terra', 'esencia', 'carvan nº 14', 'quiet storm', 'silent shadow', 'eternity', 'virent', 'mugler', 'santal', 'energetically', 'sunrise', 'red sand dunes', 'vibrant leather', 'aventus', 'd&g pour homme', 'dolce', 'boss bottled', 'boost', 'caravan 13', 'carvan nº 13', 'the man silver', 'classic black', '5221', '5201', '5303', 'elegantly tokyo', 'terre', 'barrax', 'green irish'].some(k => full.includes(k))) {
         seasons.push('primavera', 'otono', 'invierno');
-        if (['virent', 'mugler', 'sunrise', 'vibrant', 'eternity', 'elegantly tokyo'].some(k => full.includes(k))) seasons.push('verano');
+        if (['virent', 'mugler', 'sunrise', 'vibrant', 'eternity', 'elegantly tokyo', 'green irish'].some(k => full.includes(k))) seasons.push('verano');
         times.push('manana', 'tarde');
-        occasions.push('oficina', 'diario', 'formal');
+        occasions.push('oficina', 'diario');
         if (isFather) occasions.push('visita_padre');
       }
 
-      if (['fierce', 'caravan 57', 'green savage', 'sauvage', 'blue iconic', 'bleu', 'electric beat', 'club de nuit intense', 'reebok', 'invictus', 'caravan 66', 'seoul', 'nike gold'].some(k => full.includes(k))) {
+      if (['fierce', 'caravan 57', 'carvan nº 57', 'green savage', 'sauvage', 'quiros', 'blue iconic', 'bleu', 'genave', 'electric beat', 'club de nuit intense', 'reebok', 'invictus', 'caravan 66', 'carvan nº 66', 'seoul', 'nike gold', 'terre', 'barrax', 'layos', 'homme edp'].some(k => full.includes(k))) {
         seasons.push('primavera', 'verano', 'otono');
+        if (['layos', 'homme edp', 'terre', 'barrax', 'green savage'].some(k => full.includes(k))) seasons.push('invierno');
         times.push('tarde', 'noche');
-        occasions.push('tardeo', 'terraza', 'cena_casual', 'amigos');
+        if (['bleu', 'genave', 'sauvage', 'quiros', 'reebok', 'blue iconic', 'seoul', 'invictus', 'fierce'].some(k => full.includes(k))) {
+          times.push('manana');
+          occasions.push('diario');
+        }
+        occasions.push('tardeo');
       }
 
-      if (['blue spirit', 'victory', 'dior homme parfum', 'm7', '5206', 'man in black', 'n/43', '5300', 'angels', 'sand desert', 'khaltaat', 'ultra male', 'attar al wesal', 'stronger with you', 'florencia', 'el him', 'noir extreme', 'smoky noir', 'kalan', 'red carpet', 'domino', 'rosendo', 'baccarat', 'untold', 'one million', 'caravan 61', 'naxos', 'italia', 'terroni', 'terra', 'atlas', 'megamare'].some(k => full.includes(k))) {
+      if (['blue spirit', 'victory', 'dior homme parfum', 'layos', 'homme edp', 'm7', '5206', 'man in black', 'n/43', '5300', 'angels', 'sand desert', 'khaltaat', 'ultra male', 'ultra blue', 'attar al wesal', 'stronger with you', 'florencia', 'el him', 'noir extreme', 'smoky noir', 'kalan', 'red carpet', 'domino', 'rosendo', 'baccarat', 'untold', 'one million', 'caravan 61', 'carvan nº 61', 'naxos', 'italia', 'terroni', 'terra', 'atlas', 'megamare'].some(k => full.includes(k))) {
         seasons.push('otono', 'invierno');
         times.push('noche', 'tarde');
-        occasions.push('noche_fiesta', 'cena_elegante', 'frio');
+        occasions.push('noche_fiesta');
         if (['atlas', 'megamare'].some(k => full.includes(k))) {
           seasons = ['verano', 'primavera'];
-          occasions = ['aire_libre_mar'];
+          occasions = ['aire_libre_mar', 'tardeo'];
         }
       }
 
@@ -825,13 +848,13 @@
       let vibe = '🌊 Fresco Mediterráneo, Limpio & Diario';
       let block = 1;
 
-      if (['blue spirit', 'victory', '5303', 'm7', '5206', 'man in black', 'n/43', '5300', 'angels', 'sand desert', 'khaltaat', 'ultra male', 'attar al wesal', 'stronger with you', 'florencia', 'el him', 'noir extreme', 'smoky noir', 'kalan', 'red carpet', 'domino', 'rosendo', 'baccarat', 'untold', 'one million', 'caravan 61', 'naxos', 'italia', 'terroni', 'terra'].some(k => full.includes(k))) {
+      if (['blue spirit', 'victory', '5303', 'layos', 'homme edp', 'm7', '5206', 'man in black', 'n/43', '5300', 'angels', 'sand desert', 'khaltaat', 'ultra male', 'ultra blue', 'attar al wesal', 'stronger with you', 'florencia', 'el him', 'noir extreme', 'smoky noir', 'kalan', 'red carpet', 'domino', 'rosendo', 'baccarat', 'untold', 'one million', 'caravan 61', 'carvan nº 61', 'naxos', 'italia', 'terroni', 'terra'].some(k => full.includes(k))) {
         vibe = '🌙 Noche, Frío & Sensualidad (Dulce / Especiado / Ambarado)';
         block = 4;
-      } else if (['fierce', 'caravan 57', 'green savage', 'sauvage', 'blue iconic', 'bleu', 'electric beat', 'club de nuit intense', 'reebok', 'invictus', 'caravan 66', 'seoul', 'nike gold'].some(k => full.includes(k))) {
+      } else if (['fierce', 'caravan 57', 'carvan nº 57', 'green savage', 'sauvage', 'quiros', 'blue iconic', 'bleu', 'genave', 'electric beat', 'club de nuit intense', 'reebok', 'invictus', 'caravan 66', 'carvan nº 66', 'seoul', 'nike gold'].some(k => full.includes(k))) {
         vibe = '🌆 Tardeo, Magnético & Citas Casuales';
         block = 3;
-      } else if (['prada', 'vetiver terra', 'esencia', 'quiet storm', 'silent shadow', 'eternity', 'virent', 'mugler', 'santal', 'energetically', 'sunrise', 'red sand dunes', 'vibrant leather', 'aventus', 'd&g pour homme', 'dolce', 'boss bottled', 'boost', 'caravan 13', 'the man silver', 'classic black', '5221', '5201', 'elegantly tokyo'].some(k => full.includes(k))) {
+      } else if (['prada', 'vetiver terra', 'esencia', 'carvan nº 14', 'quiet storm', 'silent shadow', 'eternity', 'virent', 'mugler', 'santal', 'energetically', 'sunrise', 'red sand dunes', 'vibrant leather', 'aventus', 'd&g pour homme', 'dolce', 'boss bottled', 'boost', 'caravan 13', 'carvan nº 13', 'the man silver', 'classic black', '5221', '5201', 'elegantly tokyo', 'terre', 'barrax', 'green irish'].some(k => full.includes(k))) {
         vibe = '💼 Oficina, Pulcritud & Firma Elegante';
         block = 2;
       }
@@ -846,11 +869,36 @@
       };
     }
 
-    // Weather Fetch for Alenda Golf
+    function describeWeatherCode(wCode, isDay = 1) {
+      if (wCode === 0) {
+        return { text: isDay ? 'Soleado' : 'Noche despejada', icon: isDay ? '☀️' : '🌙' };
+      } else if (wCode === 1) {
+        return { text: isDay ? 'Mayormente soleado' : 'Poco nuboso', icon: isDay ? '🌤️' : '🌙' };
+      } else if (wCode === 2) {
+        return { text: isDay ? 'Sol y nubes' : 'Intervalos nubosos', icon: isDay ? '⛅' : '☁️' };
+      } else if (wCode === 3) {
+        return { text: 'Nublado / Cubierto', icon: '☁️' };
+      } else if (wCode >= 45 && wCode <= 48) {
+        return { text: 'Niebla / Bruma', icon: '🌫️' };
+      } else if (wCode >= 51 && wCode <= 57) {
+        return { text: 'Llovizna débil', icon: '🌦️' };
+      } else if (wCode >= 61 && wCode <= 67) {
+        return { text: 'Lluvia', icon: '🌧️' };
+      } else if (wCode >= 71 && wCode <= 77) {
+        return { text: 'Nieve / Aguanieve', icon: '❄️' };
+      } else if (wCode >= 80 && wCode <= 82) {
+        return { text: 'Chubascos / Lluvia', icon: '🌦️' };
+      } else if (wCode >= 95) {
+        return { text: 'Tormenta', icon: '⛈️' };
+      }
+      return { text: 'Templado', icon: isDay ? '☀️' : '🌙' };
+    }
+
+    // Weather Fetch for Alenda Golf (Current + Day/Afternoon 09h-20h Street Window)
     async function fetchLiveWeather() {
       const lat = 38.356;
       const lon = -0.686;
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&timezone=Europe%2FMadrid`;
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=1&timezone=Europe%2FMadrid`;
 
       try {
         const resp = await fetch(weatherUrl);
@@ -859,39 +907,72 @@
         const curr = data.current;
         liveWeather = curr;
 
+        // 1. Current conditions right now
         const temp = Math.round(curr.temperature_2m);
         const wCode = curr.weather_code;
         const isDay = curr.is_day;
-
-        let condition = 'Despejado';
-        let icon = isDay ? '☀️' : '🌙';
-        if (wCode === 0) {
-          condition = isDay ? 'Soleado y despejado' : 'Noche despejada';
-          icon = isDay ? '☀️' : '🌙';
-        } else if (wCode >= 1 && wCode <= 3) {
-          condition = 'Parcialmente nublado';
-          icon = isDay ? '⛅' : '☁️';
-        } else if (wCode >= 45 && wCode <= 48) {
-          condition = 'Niebla / Bruma';
-          icon = '🌫️';
-        } else if (wCode >= 51 && wCode <= 67) {
-          condition = 'Lluvia ligera';
-          icon = '🌧️';
-        } else if (wCode >= 80) {
-          condition = 'Chubascos / Tormenta';
-          icon = '⛈️';
-        }
+        const currDesc = describeWeatherCode(wCode, isDay);
 
         document.getElementById('weatherTemp').textContent = `${temp}°C`;
-        document.getElementById('weatherConditionText').textContent = condition;
-        document.getElementById('contextIcon').textContent = icon;
+        document.getElementById('weatherConditionText').textContent = currDesc.text;
+        document.getElementById('contextIcon').textContent = currDesc.icon;
+
+        // 2. Day & Afternoon street window (09:00h to 20:00h inclusive -> indices 9..20)
+        let refTempForSeason = temp;
+        if (data.hourly && Array.isArray(data.hourly.temperature_2m) && Array.isArray(data.hourly.weather_code)) {
+          const dayTemps = data.hourly.temperature_2m.slice(9, 21).filter(v => typeof v === 'number');
+          const dayCodes = data.hourly.weather_code.slice(9, 21).filter(v => typeof v === 'number');
+
+          if (dayTemps.length > 0) {
+            const sum = dayTemps.reduce((acc, v) => acc + v, 0);
+            const avgDayTemp = Math.round(sum / dayTemps.length);
+            const maxDayTemp = Math.round(Math.max(...dayTemps));
+
+            // Determine representative weather for the 09h-20h street window
+            let dominantCode = 0;
+            const hasStorm = dayCodes.some(c => c >= 95);
+            const rainHours = dayCodes.filter(c => c >= 51).length;
+            const fogHours = dayCodes.filter(c => c >= 45 && c <= 48).length;
+
+            if (hasStorm) {
+              dominantCode = 95;
+            } else if (rainHours >= 2) {
+              dominantCode = 61;
+            } else if (rainHours === 1) {
+              dominantCode = 51;
+            } else if (fogHours >= 3) {
+              dominantCode = 45;
+            } else {
+              // Mode of sky cloudiness codes (0, 1, 2, 3)
+              const counts = {};
+              dayCodes.forEach(c => { counts[c] = (counts[c] || 0) + 1; });
+              let bestCount = -1;
+              for (const [codeStr, cnt] of Object.entries(counts)) {
+                if (cnt > bestCount) {
+                  bestCount = cnt;
+                  dominantCode = parseInt(codeStr, 10);
+                }
+              }
+            }
+
+            const dayDesc = describeWeatherCode(dominantCode, 1);
+            document.getElementById('dayAvgTempBadge').textContent = `Media ${avgDayTemp}°C (máx ${maxDayTemp}°C)`;
+            document.getElementById('dayForecastCondition').innerHTML = `<span>${dayDesc.icon}</span> <span>${dayDesc.text}</span>`;
+
+            // Use the Day/Afternoon average temperature if before 20h so early morning chill doesn't mislead
+            const currentHour = new Date().getHours();
+            if (currentHour < 20) {
+              refTempForSeason = avgDayTemp;
+            }
+          }
+        }
 
         const seasonSelect = document.getElementById('seasonSelect');
-        if (temp >= 24) {
+        if (refTempForSeason >= 24) {
           seasonSelect.value = 'verano';
-        } else if (temp >= 19) {
+        } else if (refTempForSeason >= 19) {
           seasonSelect.value = 'primavera';
-        } else if (temp >= 15) {
+        } else if (refTempForSeason >= 15) {
           seasonSelect.value = 'otono';
         } else {
           seasonSelect.value = 'invierno';
@@ -900,8 +981,10 @@
         applyFilters(false);
       } catch (err) {
         console.log('Error fetching weather:', err);
-        document.getElementById('weatherTemp').textContent = '22°C';
-        document.getElementById('weatherConditionText').textContent = 'Soleado (Alenda Golf)';
+        document.getElementById('weatherTemp').textContent = '18°C';
+        document.getElementById('weatherConditionText').textContent = 'Sol y nubes';
+        document.getElementById('dayAvgTempBadge').textContent = 'Media 19°C (máx 21°C)';
+        document.getElementById('dayForecastCondition').innerHTML = '<span>⛅</span> <span>Sol y nubes</span>';
       }
     }
 
@@ -940,38 +1023,37 @@
       const onlyCompliments = document.getElementById('onlyCompliments').checked;
       const onlyRepeat = document.getElementById('onlyRepeat').checked;
 
+      // 1. Strict match for the exact selected occasion, thermal sensation (season), and time of day
       filteredList = PERFUMES.filter(p => {
         if (occasion === 'visita_padre') {
           if (!p.father) return false;
-        } else {
-          if (!p.occasions.includes(occasion)) {
-            if (occasion === 'diario' && (p.block === 1 || p.block === 2)) {
-            } else if (occasion === 'oficina' && p.block === 2) {
-            } else {
-              return false;
-            }
-          }
+        } else if (!p.occasions.includes(occasion)) {
+          return false;
         }
 
-        if (!p.seasons.includes(season)) {
-          if ((season === 'otono' || season === 'primavera' || season === 'verano') && p.block === 1) {
-          } else {
-            return false;
-          }
-        }
-
-        if (!p.times.includes(time)) {
-          if (p.block === 4 && time === 'manana' && occasion !== 'frio') return false;
-        }
-
+        if (!p.seasons.includes(season)) return false;
+        if (!p.times.includes(time)) return false;
         if (onlyCompliments && !p.comp) return false;
         if (onlyRepeat && !p.repeat) return false;
 
         return true;
       });
 
+      // 2. If strict match has fewer than 3 options (e.g. night + gym or strict toggles), relax time constraint while keeping exact occasion + season
+      if (filteredList.length < 3) {
+        const relaxedTime = PERFUMES.filter(p => {
+          if (occasion === 'visita_padre' ? !p.father : !p.occasions.includes(occasion)) return false;
+          if (!p.seasons.includes(season)) return false;
+          if (onlyCompliments && !p.comp) return false;
+          if (onlyRepeat && !p.repeat) return false;
+          return true;
+        });
+        if (relaxedTime.length > filteredList.length) filteredList = relaxedTime;
+      }
+
+      // 3. Final fallback if still empty
       if (filteredList.length === 0) {
-        filteredList = PERFUMES.filter(p => p.seasons.includes(season) && (p.block === 1 || p.block === 2));
+        filteredList = PERFUMES.filter(p => p.occasions.includes(occasion) || p.seasons.includes(season));
       }
 
       document.getElementById('matchCount').textContent = filteredList.length;
@@ -981,6 +1063,8 @@
 
       if (shouldPick) {
         pickRandom(false);
+      } else if (currentSelection) {
+        renderAlternatives(currentSelection);
       }
     }
 
@@ -993,11 +1077,13 @@
 
       const weightedPool = [];
       const occasion = document.getElementById('occasionSelect').value;
+      const recentIds = new Set(getDailyHistory().slice(0, 3).map(x => x.id));
 
       filteredList.forEach(p => {
-        let weight = 1;
+        let weight = 2;
         if (p.repeat) weight += 2;
         if (p.comp) weight += 2;
+        if (!recentIds.has(p.id)) weight += 2; // Favor perfumes not worn in the last 3 days
         if (occasion === 'visita_padre') {
           const str = `${p.brand} ${p.name} ${p.dupe}`.toLowerCase();
           if (str.includes('esencia') || str.includes('prada') || str.includes('vetiver terra')) {
@@ -1107,24 +1193,79 @@
       }
     }
 
+    let currentAlternatives = [];
+
     function renderAlternatives(chosen) {
+      if (!chosen) return;
       const altContainer = document.getElementById('alternativeList');
       altContainer.innerHTML = '';
 
-      const alts = filteredList.filter(p => p.id !== chosen.id).slice(0, 3);
-      if (alts.length === 0) {
+      const occasion = document.getElementById('occasionSelect').value;
+      const season = document.getElementById('seasonSelect').value;
+      const time = document.getElementById('timeSelect').value;
+      const recentIds = new Set(getDailyHistory().slice(0, 3).map(x => x.id));
+
+      const chosenTitle = getFormattedDisplay(chosen).mainTitle.toLowerCase();
+      const seenTitles = new Set([chosenTitle]);
+
+      // Deduplicate candidates from filteredList (excluding chosen and duplicate bottles)
+      const uniqueCandidates = [];
+      for (const p of filteredList) {
+        if (p.id === chosen.id) continue;
+        const t = getFormattedDisplay(p).mainTitle.toLowerCase();
+        if (seenTitles.has(t)) continue;
+        seenTitles.add(t);
+        uniqueCandidates.push(p);
+      }
+
+      if (uniqueCandidates.length === 0) {
         altContainer.innerHTML = '<div class="text-[11px] text-slate-500 italic">No hay más alternativas con estos filtros tan específicos.</div>';
         return;
       }
 
-      alts.forEach(alt => {
+      // Weighted random draw without replacement:
+      // Prioritizes exact match for today's conditions + same olfactory block/vibe as chosen + not worn in last 3 days
+      const pickedAlts = [];
+      let pool = [...uniqueCandidates];
+
+      while (pickedAlts.length < 3 && pool.length > 0) {
+        const weighted = [];
+        for (const p of pool) {
+          let w = 2;
+          if (p.occasions.includes(occasion)) w += 3;
+          if (p.seasons.includes(season)) w += 2;
+          if (p.times.includes(time)) w += 2;
+          if (p.block === chosen.block) w += 3; // Same olfactory family as proposed perfume
+          if (!recentIds.has(p.id)) w += 2;
+          if (p.repeat) w += 1;
+          if (p.comp) w += 1;
+          for (let i = 0; i < w; i++) weighted.push(p);
+        }
+        const selected = weighted[Math.floor(Math.random() * weighted.length)];
+        pickedAlts.push(selected);
+        pool = pool.filter(x => x.id !== selected.id);
+      }
+
+      currentAlternatives = pickedAlts;
+      drawAlternativeCards();
+    }
+
+    function drawAlternativeCards() {
+      const altContainer = document.getElementById('alternativeList');
+      altContainer.innerHTML = '';
+
+      currentAlternatives.forEach((alt, idx) => {
         const disp = getFormattedDisplay(alt);
         const item = document.createElement('div');
         item.className = 'p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 active:scale-98 transition cursor-pointer flex items-center justify-between';
         item.onclick = () => {
+          const prevMain = currentSelection;
           currentSelection = alt;
+          if (prevMain) {
+            currentAlternatives[idx] = prevMain;
+          }
           renderSelection(alt, true);
-          renderAlternatives(alt);
+          drawAlternativeCards();
         };
 
         const compIcon = alt.comp ? '✨ ' : '';
