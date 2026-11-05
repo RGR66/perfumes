@@ -59,9 +59,19 @@
   <!-- Main Content Scrollable Area -->
   <main class="flex-1 p-4 pb-24 space-y-4 overflow-y-auto hide-scrollbar">
 
-    <!-- Smart Context Banner with Live Weather + Day/Afternoon Forecast for Alenda Golf -->
-    <div id="smartContextBanner" class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-700/70 rounded-2xl p-3.5 text-xs shadow-md space-y-2">
-      <!-- Line 1: Right Now at opening time -->
+    <!-- Smart Context Banner with Live Weather + Today/Tomorrow Selector for Alenda Golf -->
+    <div id="smartContextBanner" class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-700/70 rounded-2xl p-3.5 text-xs shadow-md space-y-2.5">
+      <!-- Day Target Selector: Hoy vs Mañana (Día siguiente) -->
+      <div class="flex items-center justify-between bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+        <button id="btnTargetToday" onclick="setPlanningDay('today')" class="flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5 bg-cyan-600 text-white shadow">
+          <span>☀️</span> <span>Para Hoy</span>
+        </button>
+        <button id="btnTargetTomorrow" onclick="setPlanningDay('tomorrow')" class="flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200">
+          <span>⏭️</span> <span>Para Mañana (Día siguiente)</span>
+        </button>
+      </div>
+
+      <!-- Line 1: Right Now (if Today) or Tomorrow 08:00h (if Tomorrow) -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl" id="contextIcon">☀️</span>
@@ -72,7 +82,7 @@
               <span class="text-slate-500">•</span>
               <span id="weatherConditionText" class="text-slate-200 font-semibold">Consultando...</span>
             </div>
-            <div class="text-[10px] text-slate-400 mt-0.5">
+            <div class="text-[10px] text-slate-400 mt-0.5" id="contextLocationSub">
               <span>📍 Alenda Golf (Monforte del Cid) — Ahora mismo</span>
             </div>
           </div>
@@ -86,7 +96,7 @@
       <div class="pt-2 border-t border-slate-800/90 flex items-center justify-between gap-2 text-[11px]">
         <div class="flex items-center gap-1.5 text-slate-300 font-medium">
           <span>🚶</span>
-          <span class="text-slate-400">Día y Tarde (09h-20h):</span>
+          <span class="text-slate-400" id="dayWindowLabel">Día y Tarde (09h-20h):</span>
         </div>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <span id="dayAvgTempBadge" class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 font-bold text-[11px] border border-cyan-500/30">Media --°C</span>
@@ -894,91 +904,161 @@
       return { text: 'Templado', icon: isDay ? '☀️' : '🌙' };
     }
 
-    // Weather Fetch for Alenda Golf (Current + Day/Afternoon 09h-20h Street Window)
+    let planningDay = 'today'; // 'today' or 'tomorrow'
+    let fullWeatherData = null;
+
+    function computeWindowStats(tempsSlice, codesSlice) {
+      const validTemps = (tempsSlice || []).filter(v => typeof v === 'number');
+      const validCodes = (codesSlice || []).filter(v => typeof v === 'number');
+      if (validTemps.length === 0) return null;
+
+      const sum = validTemps.reduce((acc, v) => acc + v, 0);
+      const avgTemp = Math.round(sum / validTemps.length);
+      const maxTemp = Math.round(Math.max(...validTemps));
+
+      let dominantCode = 0;
+      const hasStorm = validCodes.some(c => c >= 95);
+      const rainHours = validCodes.filter(c => c >= 51).length;
+      const fogHours = validCodes.filter(c => c >= 45 && c <= 48).length;
+
+      if (hasStorm) {
+        dominantCode = 95;
+      } else if (rainHours >= 2) {
+        dominantCode = 61;
+      } else if (rainHours === 1) {
+        dominantCode = 51;
+      } else if (fogHours >= 3) {
+        dominantCode = 45;
+      } else {
+        const counts = {};
+        validCodes.forEach(c => { counts[c] = (counts[c] || 0) + 1; });
+        let bestCount = -1;
+        for (const [codeStr, cnt] of Object.entries(counts)) {
+          if (cnt > bestCount) {
+            bestCount = cnt;
+            dominantCode = parseInt(codeStr, 10);
+          }
+        }
+      }
+
+      return {
+        avgTemp,
+        maxTemp,
+        desc: describeWeatherCode(dominantCode, 1)
+      };
+    }
+
+    function setPlanningDay(target) {
+      planningDay = target;
+      const btnToday = document.getElementById('btnTargetToday');
+      const btnTomorrow = document.getElementById('btnTargetTomorrow');
+
+      if (target === 'today') {
+        btnToday.className = "flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5 bg-cyan-600 text-white shadow";
+        btnTomorrow.className = "flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
+        autoDetectConditions(false);
+      } else {
+        btnTomorrow.className = "flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5 bg-indigo-600 text-white shadow";
+        btnToday.className = "flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
+        // For tomorrow, default time of day to morning (can still be changed by user)
+        document.getElementById('timeSelect').value = 'manana';
+      }
+
+      renderWeatherForPlanningDay(true);
+    }
+
+    function renderWeatherForPlanningDay(shouldPickNew = false) {
+      if (!fullWeatherData) {
+        if (shouldPickNew) applyFilters(true);
+        return;
+      }
+
+      const curr = fullWeatherData.current;
+      const hourlyTemps = (fullWeatherData.hourly && fullWeatherData.hourly.temperature_2m) ? fullWeatherData.hourly.temperature_2m : [];
+      const hourlyCodes = (fullWeatherData.hourly && fullWeatherData.hourly.weather_code) ? fullWeatherData.hourly.weather_code : [];
+
+      let refTempForSeason = 19;
+
+      if (planningDay === 'today') {
+        const now = new Date();
+        const hour = now.getHours();
+        let timeName = 'Mañana';
+        if (hour >= 14 && hour < 20) timeName = 'Tarde / Tardeo';
+        else if (hour >= 20 || hour < 6) timeName = 'Noche';
+
+        const temp = Math.round(curr.temperature_2m);
+        const currDesc = describeWeatherCode(curr.weather_code, curr.is_day);
+
+        document.getElementById('contextTitle').textContent = `Hoy • ${timeName} (${hour}:${String(now.getMinutes()).padStart(2, '0')}h)`;
+        document.getElementById('weatherTemp').textContent = `${temp}°C`;
+        document.getElementById('weatherConditionText').textContent = currDesc.text;
+        document.getElementById('contextIcon').textContent = currDesc.icon;
+        document.getElementById('contextLocationSub').innerHTML = `<span>📍 Alenda Golf (Monforte del Cid) — Ahora mismo</span>`;
+        document.getElementById('dayWindowLabel').textContent = 'Hoy Día y Tarde (09h-20h):';
+
+        const todayStats = computeWindowStats(hourlyTemps.slice(9, 21), hourlyCodes.slice(9, 21));
+        if (todayStats) {
+          document.getElementById('dayAvgTempBadge').textContent = `Media ${todayStats.avgTemp}°C (máx ${todayStats.maxTemp}°C)`;
+          document.getElementById('dayForecastCondition').innerHTML = `<span>${todayStats.desc.icon}</span> <span>${todayStats.desc.text}</span>`;
+          refTempForSeason = (hour < 20) ? todayStats.avgTemp : temp;
+        } else {
+          refTempForSeason = temp;
+        }
+      } else {
+        // Tomorrow (indices 24..47 in 2-day hourly forecast; index 32 is 08:00h tomorrow, indices 33..44 are 09:00h..20:00h tomorrow)
+        const tomDate = new Date();
+        tomDate.setDate(tomDate.getDate() + 1);
+        const tomWeekday = tomDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+        const tomLabel = tomWeekday.charAt(0).toUpperCase() + tomWeekday.slice(1);
+
+        const temp8am = typeof hourlyTemps[32] === 'number' ? Math.round(hourlyTemps[32]) : 16;
+        const code8am = typeof hourlyCodes[32] === 'number' ? hourlyCodes[32] : 1;
+        const desc8am = describeWeatherCode(code8am, 1);
+
+        document.getElementById('contextTitle').textContent = `Mañana (${tomLabel}) • 08:00h`;
+        document.getElementById('weatherTemp').textContent = `${temp8am}°C`;
+        document.getElementById('weatherConditionText').textContent = desc8am.text;
+        document.getElementById('contextIcon').textContent = desc8am.icon;
+        document.getElementById('contextLocationSub').innerHTML = `<span class="text-indigo-300 font-medium">⏭️ Previsión Alenda Golf mañana a 1ª hora (08:00h)</span>`;
+        document.getElementById('dayWindowLabel').textContent = 'Mañana Día y Tarde (09h-20h):';
+
+        const tomStats = computeWindowStats(hourlyTemps.slice(33, 45), hourlyCodes.slice(33, 45));
+        if (tomStats) {
+          document.getElementById('dayAvgTempBadge').textContent = `Media ${tomStats.avgTemp}°C (máx ${tomStats.maxTemp}°C)`;
+          document.getElementById('dayForecastCondition').innerHTML = `<span>${tomStats.desc.icon}</span> <span>${tomStats.desc.text}</span>`;
+          refTempForSeason = tomStats.avgTemp;
+        } else {
+          refTempForSeason = temp8am;
+        }
+      }
+
+      const seasonSelect = document.getElementById('seasonSelect');
+      if (refTempForSeason >= 24) {
+        seasonSelect.value = 'verano';
+      } else if (refTempForSeason >= 19) {
+        seasonSelect.value = 'primavera';
+      } else if (refTempForSeason >= 15) {
+        seasonSelect.value = 'otono';
+      } else {
+        seasonSelect.value = 'invierno';
+      }
+
+      applyFilters(shouldPickNew);
+    }
+
+    // Weather Fetch for Alenda Golf (2-Day Forecast: Today + Tomorrow 09h-20h Street Window)
     async function fetchLiveWeather() {
       const lat = 38.356;
       const lon = -0.686;
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=1&timezone=Europe%2FMadrid`;
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_days=2&timezone=Europe%2FMadrid`;
 
       try {
         const resp = await fetch(weatherUrl);
         if (!resp.ok) throw new Error('Network error');
         const data = await resp.json();
-        const curr = data.current;
-        liveWeather = curr;
-
-        // 1. Current conditions right now
-        const temp = Math.round(curr.temperature_2m);
-        const wCode = curr.weather_code;
-        const isDay = curr.is_day;
-        const currDesc = describeWeatherCode(wCode, isDay);
-
-        document.getElementById('weatherTemp').textContent = `${temp}°C`;
-        document.getElementById('weatherConditionText').textContent = currDesc.text;
-        document.getElementById('contextIcon').textContent = currDesc.icon;
-
-        // 2. Day & Afternoon street window (09:00h to 20:00h inclusive -> indices 9..20)
-        let refTempForSeason = temp;
-        if (data.hourly && Array.isArray(data.hourly.temperature_2m) && Array.isArray(data.hourly.weather_code)) {
-          const dayTemps = data.hourly.temperature_2m.slice(9, 21).filter(v => typeof v === 'number');
-          const dayCodes = data.hourly.weather_code.slice(9, 21).filter(v => typeof v === 'number');
-
-          if (dayTemps.length > 0) {
-            const sum = dayTemps.reduce((acc, v) => acc + v, 0);
-            const avgDayTemp = Math.round(sum / dayTemps.length);
-            const maxDayTemp = Math.round(Math.max(...dayTemps));
-
-            // Determine representative weather for the 09h-20h street window
-            let dominantCode = 0;
-            const hasStorm = dayCodes.some(c => c >= 95);
-            const rainHours = dayCodes.filter(c => c >= 51).length;
-            const fogHours = dayCodes.filter(c => c >= 45 && c <= 48).length;
-
-            if (hasStorm) {
-              dominantCode = 95;
-            } else if (rainHours >= 2) {
-              dominantCode = 61;
-            } else if (rainHours === 1) {
-              dominantCode = 51;
-            } else if (fogHours >= 3) {
-              dominantCode = 45;
-            } else {
-              // Mode of sky cloudiness codes (0, 1, 2, 3)
-              const counts = {};
-              dayCodes.forEach(c => { counts[c] = (counts[c] || 0) + 1; });
-              let bestCount = -1;
-              for (const [codeStr, cnt] of Object.entries(counts)) {
-                if (cnt > bestCount) {
-                  bestCount = cnt;
-                  dominantCode = parseInt(codeStr, 10);
-                }
-              }
-            }
-
-            const dayDesc = describeWeatherCode(dominantCode, 1);
-            document.getElementById('dayAvgTempBadge').textContent = `Media ${avgDayTemp}°C (máx ${maxDayTemp}°C)`;
-            document.getElementById('dayForecastCondition').innerHTML = `<span>${dayDesc.icon}</span> <span>${dayDesc.text}</span>`;
-
-            // Use the Day/Afternoon average temperature if before 20h so early morning chill doesn't mislead
-            const currentHour = new Date().getHours();
-            if (currentHour < 20) {
-              refTempForSeason = avgDayTemp;
-            }
-          }
-        }
-
-        const seasonSelect = document.getElementById('seasonSelect');
-        if (refTempForSeason >= 24) {
-          seasonSelect.value = 'verano';
-        } else if (refTempForSeason >= 19) {
-          seasonSelect.value = 'primavera';
-        } else if (refTempForSeason >= 15) {
-          seasonSelect.value = 'otono';
-        } else {
-          seasonSelect.value = 'invierno';
-        }
-
-        applyFilters(false);
+        fullWeatherData = data;
+        liveWeather = data.current;
+        renderWeatherForPlanningDay(false);
       } catch (err) {
         console.log('Error fetching weather:', err);
         document.getElementById('weatherTemp').textContent = '18°C';
@@ -988,7 +1068,7 @@
       }
     }
 
-    function autoDetectConditions() {
+    function autoDetectConditions(shouldApply = true) {
       const now = new Date();
       const hour = now.getHours();
 
@@ -1010,10 +1090,14 @@
       }
       document.getElementById('timeSelect').value = detectedTime;
 
-      document.getElementById('contextIcon').textContent = icon;
-      document.getElementById('contextTitle').textContent = `${timeName} (${hour}:${String(now.getMinutes()).padStart(2, '0')}h)`;
+      if (planningDay === 'today') {
+        document.getElementById('contextIcon').textContent = icon;
+        document.getElementById('contextTitle').textContent = `Hoy • ${timeName} (${hour}:${String(now.getMinutes()).padStart(2, '0')}h)`;
+      }
 
-      applyFilters(true);
+      if (shouldApply) {
+        applyFilters(true);
+      }
     }
 
     function applyFilters(shouldPick = true) {
@@ -1168,28 +1252,36 @@
       updateWornButtonState();
     }
 
+    function getTargetDateObj() {
+      const d = new Date();
+      if (planningDay === 'tomorrow') {
+        d.setDate(d.getDate() + 1);
+      }
+      return d;
+    }
+
     function updateWornButtonState() {
       const btn = document.getElementById('btnMarkWorn');
       const icon = document.getElementById('btnMarkWornIcon');
       const text = document.getElementById('btnMarkWornText');
 
       const historyLog = getDailyHistory();
-      const todayDateOnly = new Date().toLocaleDateString('es-ES');
+      const targetDateOnly = getTargetDateObj().toLocaleDateString('es-ES');
       let isCurrentWorn = false;
 
       if (currentSelection) {
-        const found = historyLog.find(item => (item.id === currentSelection.id || (item.dupe && item.dupe === currentSelection.dupe)) && item.rawDate === todayDateOnly);
+        const found = historyLog.find(item => (item.id === currentSelection.id || (item.dupe && item.dupe === currentSelection.dupe)) && item.rawDate === targetDateOnly);
         if (found) isCurrentWorn = true;
       }
 
       if (isCurrentWorn) {
         btn.className = "py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs border border-emerald-400 flex items-center gap-1.5 transition shadow-lg shadow-emerald-900/50";
         icon.textContent = "🎉";
-        text.textContent = "¡Puesta Hoy!";
+        text.textContent = planningDay === 'tomorrow' ? "¡Para Mañana!" : "¡Puesta Hoy!";
       } else {
         btn.className = "py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition";
         icon.textContent = "✅";
-        text.textContent = "Elegir Esta";
+        text.textContent = planningDay === 'tomorrow' ? "Elegir Mañana" : "Elegir Hoy";
       }
     }
 
@@ -1451,19 +1543,22 @@
 
     function markWornToday() {
       if (!currentSelection) return;
-      const now = new Date();
-      const todayRaw = now.toLocaleDateString('es-ES');
-      const timeFormatted = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-      const dayFormatted = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const targetDate = getTargetDateObj();
+      const targetRaw = targetDate.toLocaleDateString('es-ES');
+      const timeFormatted = planningDay === 'tomorrow'
+        ? "08:00"
+        : new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      const dayFormatted = targetDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       const occasionName = document.getElementById('occasionSelect').selectedOptions[0].text.split('(')[0].trim();
-      const weatherTemp = document.getElementById('weatherTemp').textContent;
+      const avgBadgeText = document.getElementById('dayAvgTempBadge').textContent || '';
+      const weatherTemp = avgBadgeText.includes('Media') ? avgBadgeText.split('(')[0].replace('Media', '').trim() : document.getElementById('weatherTemp').textContent;
 
       let log = getDailyHistory();
-      const existingIdx = log.findIndex(item => item.rawDate === todayRaw);
+      const existingIdx = log.findIndex(item => item.rawDate === targetRaw);
 
       const entry = {
         id: currentSelection.id,
-        rawDate: todayRaw,
+        rawDate: targetRaw,
         dayTitle: dayFormatted.charAt(0).toUpperCase() + dayFormatted.slice(1),
         time: timeFormatted,
         name: currentSelection.name,
@@ -1478,7 +1573,7 @@
       };
 
       const deletedMap = getDeletedDatesMap();
-      delete deletedMap[todayRaw];
+      delete deletedMap[targetRaw];
       saveDeletedDatesMap(deletedMap);
 
       if (existingIdx >= 0) {
@@ -1573,15 +1668,29 @@
       }
 
       const todayRaw = new Date().toLocaleDateString('es-ES');
+      const tomDate = new Date();
+      tomDate.setDate(tomDate.getDate() + 1);
+      const tomorrowRaw = tomDate.toLocaleDateString('es-ES');
+
       const todayEntry = log.find(item => item.rawDate === todayRaw);
+      const tomorrowEntry = log.find(item => item.rawDate === tomorrowRaw);
 
       const histContainer = document.getElementById('historyContainer');
       const histText = document.getElementById('historyText');
 
+      const lines = [];
       if (todayEntry) {
         const disp = getFormattedDisplay(todayEntry);
+        lines.push(`☀️ <b>Hoy:</b> <b class="text-white">${disp.mainTitle}</b> (${disp.badgeCat}) para <i>${todayEntry.occasion}</i>.`);
+      }
+      if (tomorrowEntry) {
+        const dispTom = getFormattedDisplay(tomorrowEntry);
+        lines.push(`⏭️ <b>Preparada para mañana:</b> <b class="text-indigo-300">${dispTom.mainTitle}</b> (${dispTom.badgeCat}) para <i>${tomorrowEntry.occasion}</i>.`);
+      }
+
+      if (lines.length > 0) {
         histContainer.classList.remove('hidden');
-        histText.innerHTML = `Llevas puesta hoy: <b class="text-white">${disp.mainTitle}</b> (${disp.badgeCat}) para <i>${todayEntry.occasion}</i>.`;
+        histText.innerHTML = lines.join('<br>');
       } else if (log.length > 0) {
         const last = log[0];
         const disp = getFormattedDisplay(last);
@@ -1639,8 +1748,16 @@
         const card = document.createElement('div');
         card.className = "p-3 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1.5 relative overflow-hidden";
         
-        const isToday = item.rawDate === new Date().toLocaleDateString('es-ES');
-        const todayBadge = isToday ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">HOY</span>' : '';
+        const todayStr = new Date().toLocaleDateString('es-ES');
+        const tomObj = new Date();
+        tomObj.setDate(tomObj.getDate() + 1);
+        const tomStr = tomObj.toLocaleDateString('es-ES');
+
+        const isToday = item.rawDate === todayStr;
+        const isTomorrow = item.rawDate === tomStr;
+        const todayBadge = isToday
+          ? '<span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold">HOY</span>'
+          : (isTomorrow ? '<span class="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[9px] font-bold">MAÑANA</span>' : '');
         const compBadge = item.comp ? '✨ ' : '';
         const repBadge = item.repeat ? '🟢 ' : '';
 
